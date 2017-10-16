@@ -2,14 +2,24 @@
 
 Generating [DingTalk] notification from [Prometheus] [AlertManager] WebHooks.
 
-## Build
+## Building and running
 
-Just type and run: `make build`, all binaries will be placed into `.build' directory.
+### Build
+
+```bash
+make
+```
+
+### Running
+
+```bash
+./prometheus-webhook-dingtalk <flags>
+```
 
 ## Usage
 
 ```
-usage: prom-webhook-dingtalk [<args>]
+usage: prometheus-webhook-dingtalk [<args>]
 
 
    -web.listen-address ":8060"

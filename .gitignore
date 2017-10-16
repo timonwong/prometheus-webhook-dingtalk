@@ -4,3 +4,4 @@
 
 *.tar.gz
 coverage.txt
+/prometheus-webhook-dingtalk
