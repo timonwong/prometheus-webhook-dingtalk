@@ -27,7 +27,7 @@ func init() {
 		"Address to listen on for web interface.",
 	)
 	cfg.fs.Var(&cfg.dingTalkProfiles, "ding.profile",
-		"Custom DingTalk profile (can specify multiple times, <profile>=<webhook-url>).",
+		"Custom DingTalk profile (can specify multiple times, <profile>=<dingtalk-url>).",
 	)
 	cfg.fs.DurationVar(&cfg.requestTimeout, "ding.timeout", 5*time.Second,
 		"Timeout for invoking DingTalk webhook.",
@@ -50,7 +50,7 @@ func parse(args []string) error {
 }
 
 var helpTmpl = strings.TrimSpace(`
-usage: prom-webhook-dingtalk [<args>]
+usage: prometheus-webhook-dingtalk [<args>]
 {{ range $cat, $flags := . }}{{ if ne $cat "." }} == {{ $cat | upper }} =={{ end }}
   {{ range $flags }}
    -{{ .Name }} {{ .DefValue | quote }}
