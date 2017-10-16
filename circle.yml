@@ -2,7 +2,7 @@ machine:
   environment:
     DOCKER_IMAGE_NAME: timonwong/prometheus-webhook-dingtalk
     QUAY_IMAGE_NAME: quay.io/timonwong/prometheus-webhook-dingtalk
-    DOCKER_TEST_IMAGE_NAME: quay.io/prometheus/golang-builder:1.6-base
+    DOCKER_TEST_IMAGE_NAME: quay.io/prometheus/golang-builder:1.8-base
     REPO_PATH: github.com/timonwong/prometheus-webhook-dingtalk
   pre:
     - sudo curl -L -o /usr/bin/docker 'https://s3-external-1.amazonaws.com/circle-downloads/docker-1.9.1-circleci'
