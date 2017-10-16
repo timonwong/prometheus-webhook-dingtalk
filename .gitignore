@@ -1,0 +1,6 @@
+/.idea
+/.vscode
+/.build
+
+*.tar.gz
+coverage.txt
