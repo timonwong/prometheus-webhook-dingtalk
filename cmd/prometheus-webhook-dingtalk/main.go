@@ -1,36 +1,44 @@
 package main
 
 import (
-	"flag"
-	"log"
 	"net/http"
 	"os"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/go-kit/kit/log/level"
+	"github.com/prometheus/common/promlog"
+	"github.com/prometheus/common/promlog/flag"
+	"github.com/prometheus/common/version"
 	"github.com/timonwong/prometheus-webhook-dingtalk/webrouter"
+	"gopkg.in/alecthomas/kingpin.v2"
+)
+
+var (
+	listenAddress    = kingpin.Flag("web.listen-address", "The address to listen on for web interface.").Default(":8060").String()
+	dingTalkProfiles = DingTalkProfiles(kingpin.Flag("ding.profile", "Custom DingTalk profile (can specify multiple times, <profile>=<dingtalk-url>).").Required())
+	requestTimeout   = kingpin.Flag("ding.timeout", "Timeout for invoking DingTalk webhook.").Default("5s").Duration()
 )
 
 func main() {
-	if err := parse(os.Args[1:]); err != nil {
-		if err == flag.ErrHelp {
-			return
-		}
-		log.Fatalf("Parse error: %s", err)
-	}
+	allowedLevel := promlog.AllowedLevel{}
+	flag.AddFlags(kingpin.CommandLine, &allowedLevel)
+	kingpin.Version(version.Print("prometheus-webhook-dingtalk"))
+	kingpin.HelpFlag.Short('h')
+	kingpin.Parse()
+
+	logger := promlog.New(allowedLevel)
+	level.Info(logger).Log("msg", "Starting prometheus-webhook-dingtalk", "version", version.Info())
 
 	r := chi.NewRouter()
-	// A good base middleware stack
-	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
-	// When a client closes their connection midway through a request, the
-	// http.CloseNotifier will cancel the request context (ctx).
 	r.Use(middleware.CloseNotify)
 
 	dingTalkResource := &webrouter.DingTalkResource{
-		Profiles: cfg.dingTalkProfiles.profiles,
+		Logger:   logger,
+		Profiles: map[string]string(*dingTalkProfiles),
 		HttpClient: &http.Client{
-			Timeout: cfg.requestTimeout,
+			Timeout: *requestTimeout,
 			Transport: &http.Transport{
 				Proxy:             http.ProxyFromEnvironment,
 				DisableKeepAlives: true,
@@ -39,8 +47,9 @@ func main() {
 	}
 	r.Mount("/dingtalk", dingTalkResource.Routes())
 
-	log.Printf("Starting webserver on %s", cfg.listenAddress)
-	if err := http.ListenAndServe(cfg.listenAddress, r); err != nil {
-		log.Panicf("Failed to serve: %s", err)
+	level.Info(logger).Log("msg", "Listening on address", "address", *listenAddress)
+	if err := http.ListenAndServe(*listenAddress, r); err != nil {
+		level.Error(logger).Log("msg", "Error starting HTTP server", "err", err)
+		os.Exit(1)
 	}
 }
