@@ -2,15 +2,18 @@ package webrouter
 
 import (
 	"encoding/json"
-	"log"
+	"io"
 	"net/http"
 
 	"github.com/go-chi/chi"
+	"github.com/go-kit/kit/log"
+	"github.com/go-kit/kit/log/level"
 	"github.com/timonwong/prometheus-webhook-dingtalk/models"
 	"github.com/timonwong/prometheus-webhook-dingtalk/notifier"
 )
 
 type DingTalkResource struct {
+	Logger     log.Logger
 	Profiles   map[string]string
 	HttpClient *http.Client
 }
@@ -23,6 +26,7 @@ func (rs *DingTalkResource) Routes() chi.Router {
 }
 
 func (rs *DingTalkResource) SendNotification(w http.ResponseWriter, r *http.Request) {
+	logger := rs.Logger
 	profile := chi.URLParam(r, "profile")
 	webhookURL, ok := rs.Profiles[profile]
 	if !ok || webhookURL == "" {
@@ -31,34 +35,31 @@ func (rs *DingTalkResource) SendNotification(w http.ResponseWriter, r *http.Requ
 	}
 
 	var promMessage models.WebhookMessage
-	dec := json.NewDecoder(r.Body)
-	if err := dec.Decode(&promMessage); err != nil {
-		log.Printf("Cannot decode prometheus webhook JSON request: %s", err)
+	if err := json.NewDecoder(r.Body).Decode(&promMessage); err != nil {
+		level.Error(logger).Log("msg", "Cannot decode prometheus webhook JSON request", "err", err)
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
 	}
 
 	notification, err := notifier.BuildDingTalkNotification(&promMessage)
 	if err != nil {
-		log.Printf("Failed to build notification: %s", err)
+		level.Error(logger).Log("msg", "Failed to build notification", "err", err)
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
 	}
 
 	robotResp, err := notifier.SendDingTalkNotification(rs.HttpClient, webhookURL, notification)
 	if err != nil {
-		log.Printf("Failed to send notification: %s", err)
+		level.Error(logger).Log("msg", "Failed to send notification", "err", err)
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("OK"))
-
 	if robotResp.ErrorCode != 0 {
-		log.Printf("Failed to send notification to DingTalk: [%d] %s", robotResp.ErrorCode, robotResp.ErrorMessage)
+		level.Error(logger).Log("msg", "Failed to send notification to DingTalk", "respCode", robotResp.ErrorCode, "respMsg", robotResp.ErrorMessage)
+		http.Error(w, "Unable to talk to DingTalk", http.StatusUnprocessableEntity)
 		return
 	}
 
-	log.Println("Successfully send notification to DingTalk")
+	io.WriteString(w, "OK")
 }

@@ -19,19 +19,18 @@ make
 ## Usage
 
 ```
-usage: prometheus-webhook-dingtalk [<args>]
+usage: prometheus-webhook-dingtalk --ding.profile=DING.PROFILE [<flags>]
 
+Flags:
+  -h, --help             Show context-sensitive help (also try --help-long and --help-man).
+      --web.listen-address=":8060"
+                         The address to listen on for web interface.
+      --ding.profile=DING.PROFILE ...
+                         Custom DingTalk profile (can specify multiple times, <profile>=<dingtalk-url>).
+      --ding.timeout=5s  Timeout for invoking DingTalk webhook.
+      --log.level=info   Only log messages with the given severity or above. One of: [debug, info, warn, error]
+      --version          Show application version.
 
-   -web.listen-address ":8060"
-      Address to listen on for web interface.
-
- == DING ==
-
-   -ding.profile
-      Custom DingTalk profile (can specify multiple times, <profile>=<dingtalk-webhook-url>).
-
-   -ding.timeout 5s
-      Timeout for invoking DingTalk webhook.
 ```
 
 [Prometheus]: https://prometheus.io
