@@ -13,10 +13,10 @@ const (
 
 {{ define "__text_alert_list" }}{{ range . }}
 **Labels**
-{{ range .Labels.SortedPairs }}> - {{ .Name }}: {{ .Value }}
+{{ range .Labels.SortedPairs }}> - {{ .Name }}: {{ .Value | markdown }}
 {{ end }}
 **Annotations**
-{{ range .Annotations.SortedPairs }}> - {{ .Name }}: {{ .Value }}
+{{ range .Annotations.SortedPairs }}> - {{ .Name }}: {{ .Value | markdown }}
 {{ end }}
 **Source:** {{ .GeneratorURL }}
 
@@ -40,8 +40,29 @@ var (
 		"join": func(sep string, s []string) string {
 			return strings.Join(s, sep)
 		},
+		"markdown": markdownEscapeString,
 	}
+	isASCIIPunctuation [128]bool
 )
+
+func init() {
+	for _, c := range "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~." {
+		isASCIIPunctuation[c] = true
+	}
+}
+
+func markdownEscapeString(s string) string {
+	b := make([]byte, 0, len(s))
+	buf := bytes.NewBuffer(b)
+
+	for _, c := range s {
+		if c < 128 && isASCIIPunctuation[c] {
+			buf.WriteByte('\\')
+		}
+		buf.WriteRune(c)
+	}
+	return buf.String()
+}
 
 func ExecuteTextString(text string, data interface{}) (string, error) {
 	if text == "" {
