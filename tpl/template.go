@@ -13,10 +13,10 @@ const (
 
 {{ define "__text_alert_list" }}{{ range . }}
 **Labels**
-{{ range .Labels.SortedPairs }}> - {{ .Name }}: {{ .Value | markdown }}
+{{ range .Labels.SortedPairs }}> - {{ .Name }}: {{ .Value | markdown | html }}
 {{ end }}
 **Annotations**
-{{ range .Annotations.SortedPairs }}> - {{ .Name }}: {{ .Value | markdown }}
+{{ range .Annotations.SortedPairs }}> - {{ .Name }}: {{ .Value | markdown | html }}
 {{ end }}
 **Source:** {{ .GeneratorURL }}
 
@@ -42,12 +42,12 @@ var (
 		},
 		"markdown": markdownEscapeString,
 	}
-	isASCIIPunctuation [128]bool
+	isMarkdownSpecial [128]bool
 )
 
 func init() {
-	for _, c := range "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~." {
-		isASCIIPunctuation[c] = true
+	for _, c := range "_*`" {
+		isMarkdownSpecial[c] = true
 	}
 }
 
@@ -56,7 +56,7 @@ func markdownEscapeString(s string) string {
 	buf := bytes.NewBuffer(b)
 
 	for _, c := range s {
-		if c < 128 && isASCIIPunctuation[c] {
+		if c < 128 && isMarkdownSpecial[c] {
 			buf.WriteByte('\\')
 		}
 		buf.WriteRune(c)
