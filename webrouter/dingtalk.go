@@ -21,7 +21,7 @@ type DingTalkResource struct {
 func (rs *DingTalkResource) Routes() chi.Router {
 	r := chi.NewRouter()
 
-	r.Post("/:profile/send", rs.SendNotification)
+	r.Post("/{profile}/send", rs.SendNotification)
 	return r
 }
 
