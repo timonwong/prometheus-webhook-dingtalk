@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/timonwong/prometheus-webhook-dingtalk/models"
 	"github.com/timonwong/prometheus-webhook-dingtalk/tpl"
+	"io/ioutil"
 )
 
 func BuildDingTalkNotification(promMessage *models.WebhookMessage) (*models.DingTalkNotification, error) {
@@ -63,7 +64,8 @@ func SendDingTalkNotification(httpClient *http.Client, webhookURL string, notifi
 	var robotResp models.DingTalkNotificationResponse
 	enc := json.NewDecoder(req.Body)
 	if err := enc.Decode(&robotResp); err != nil {
-		return nil, errors.Wrap(err, "error decoding response from DingTalk")
+		body, err = ioutil.ReadAll(req.Body)
+		return nil, errors.Wrap(err, "error decoding response from DingTalk : "+string(body))
 	}
 
 	return &robotResp, nil
