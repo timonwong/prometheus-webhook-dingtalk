@@ -18,6 +18,7 @@ build:
 tarball:
   files:
     - LICENSE
+    - template/default.tmpl
 crossbuild:
   platforms:
     - linux/amd64

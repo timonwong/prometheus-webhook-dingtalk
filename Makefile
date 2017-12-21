@@ -11,12 +11,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-GO    := GO15VENDOREXPERIMENT=1 go
-PROMU := $(GOPATH)/bin/promu
+GO           := GO15VENDOREXPERIMENT=1 go
+FIRST_GOPATH := $(firstword $(subst :, ,$(shell $(GO) env GOPATH)))
+PROMU        := $(FIRST_GOPATH)/bin/promu
 
 PREFIX                  ?= $$(pwd)
 BIN_DIR                 ?= $$(pwd)
-DOCKER_IMAGE_NAME       ?= uwsgi-exporter
+DOCKER_IMAGE_NAME       ?= prometheus-webhook-dingtalk
 DOCKER_IMAGE_TAG        ?= $(subst /,-,$$(git rev-parse --abbrev-ref HEAD))
 
 TESTARGS                ?= -race -v
@@ -42,6 +43,14 @@ cover: fmtcheck
 		fi \
 	done
 
+format:
+	@echo ">> formatting code"
+	@gofmt -w $(GOFMT_FILES)
+
+fmtcheck:
+	@echo ">> checking code style"
+	@sh -c "'$(CURDIR)/scripts/gofmtcheck.sh'"
+
 vet:
 	@echo ">> vetting code"
 	@go tool vet $(VETARGS) $$(ls -d */ | grep -v vendor) ; if [ $$? -eq 1 ]; then \
@@ -51,9 +60,20 @@ vet:
 		exit 1; \
 	fi
 
+assets: go-bindata template/internal/deftmpl/bindata.go
+
+go-bindata:
+	-@$(GO) get -u github.com/jteeuwen/go-bindata/...
+
+template/internal/deftmpl/bindata.go: template/default.tmpl
+	@go-bindata $(bindata_flags) -mode 420 -modtime 1 -pkg deftmpl -o template/internal/deftmpl/bindata.go template/default.tmpl
+
 build: promu
 	@echo ">> building binaries"
 	@$(PROMU) build --prefix $(PREFIX)
+
+# Will build both the front-end as well as the back-end
+build-all: assets build
 
 tarball: promu
 	@echo ">> building release tarball"
@@ -68,12 +88,4 @@ promu:
 		GOARCH=$(subst x86_64,amd64,$(patsubst i%86,386,$(shell uname -m))) \
 		$(GO) get -u github.com/prometheus/promu
 
-format:
-	@echo ">> formatting code"
-	@gofmt -w $(GOFMT_FILES)
-
-fmtcheck:
-	@echo ">> checking code style"
-	@sh -c "'$(CURDIR)/scripts/gofmtcheck.sh'"
-
-.PHONY: all format build test cover vet tarball docker promu fmtcheck
+.PHONY: all format build test cover vet tarball docker promu fmtcheck assets build-all

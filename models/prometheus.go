@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"sort"
 	"time"
 )
@@ -132,6 +133,6 @@ type WebhookMessage struct {
 	*Data
 
 	// The protocol version.
-	Version  string `json:"version"`
-	GroupKey string `json:"groupKey"`
+	Version  string           `json:"version"`
+	GroupKey *json.RawMessage `json:"groupKey"`
 }

@@ -8,15 +8,15 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/timonwong/prometheus-webhook-dingtalk/models"
-	"github.com/timonwong/prometheus-webhook-dingtalk/tpl"
+	"github.com/timonwong/prometheus-webhook-dingtalk/template"
 )
 
 func BuildDingTalkNotification(promMessage *models.WebhookMessage) (*models.DingTalkNotification, error) {
-	title, err := tpl.ExecuteTextString(`{{ template "ding.link.title" . }}`, promMessage)
+	title, err := template.ExecuteTextString(`{{ template "ding.link.title" . }}`, promMessage)
 	if err != nil {
 		return nil, err
 	}
-	content, err := tpl.ExecuteTextString(`{{ template "ding.link.content" . }}`, promMessage)
+	content, err := template.ExecuteTextString(`{{ template "ding.link.content" . }}`, promMessage)
 	if err != nil {
 		return nil, err
 	}
