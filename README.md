@@ -36,7 +36,7 @@ Flags:
 
 ## Using Docker
 
-You can deploy this tool using the DOcker image from following registry:
+You can deploy this tool using the Docker image from following registry:
 
 * [DockerHub]\: [timonwong/prometheus-webhook-dingtalk](https://registry.hub.docker.com/u/timonwong/prometheus-webhook-dingtalk/)
 * [Quay.io]\: [timonwong/prometheus-webhook-dingtalk](https://quay.io/repository/timonwong/prometheus-webhook-dingtalk)
