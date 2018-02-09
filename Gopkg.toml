@@ -23,6 +23,7 @@
 
 [[constraint]]
   name = "github.com/pkg/errors"
+  version = "0.8.0"
 
 [[constraint]]
   name = "github.com/go-chi/chi"
@@ -33,5 +34,5 @@
   version = "0.6.0"
 
 [[constraint]]
-  name = "github.com/sirupsen/logrus"
-  version = "1.0.3"
+  name = "github.com/prometheus/common"
+  branch = "master"
