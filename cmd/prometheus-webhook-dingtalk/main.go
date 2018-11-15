@@ -67,6 +67,11 @@ func main() {
 	r.Use(middleware.RequestLogger(&chilog.KitLogger{Logger: logger}))
 	r.Use(middleware.Recoverer)
 
+	// add heath check api
+	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("ok"))
+	})
+
 	dingTalkResource := &webrouter.DingTalkResource{
 		Logger:   logger,
 		Profiles: profiles,
