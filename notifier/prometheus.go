@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/timonwong/prometheus-webhook-dingtalk/models"
@@ -29,12 +30,22 @@ func BuildDingTalkNotification(promMessage *models.WebhookMessage) (*models.Ding
 	}
 
 	notification := &models.DingTalkNotification{
-		MessageType: "markdown",
-		Markdown: &models.DingTalkNotificationMarkdown{
-			Title: title,
-			Text:  content,
+		MessageType: "text",
+		Text: &models.DingTalkNotificationText{
+			Title:   title,
+			Content: content,
 		},
 	}
+
+	notification.At = new(models.DingTalkNotificationAt)
+	if v, ok := map[string]string(promMessage.CommonLabels)["at_mobiles"]; ok {
+		notification.At.AtMobiles = strings.Split(strings.TrimSpace(v), ",")
+	}
+
+	if _, ok := map[string]string(promMessage.CommonLabels)["is_at_all"]; ok {
+		notification.At.IsAtAll = true
+	}
+
 	return notification, nil
 }
 
@@ -68,3 +79,4 @@ func SendDingTalkNotification(httpClient *http.Client, webhookURL string, notifi
 
 	return &robotResp, nil
 }
+
