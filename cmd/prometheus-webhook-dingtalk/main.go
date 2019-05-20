@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/timonwong/prometheus-webhook-dingtalk/notifier"
+
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-kit/kit/log"
@@ -20,10 +22,13 @@ import (
 )
 
 var (
-	listenAddress    = kingpin.Flag("web.listen-address", "The address to listen on for web interface.").Default(":8060").String()
-	dingTalkProfiles = DingTalkProfiles(kingpin.Flag("ding.profile", "Custom DingTalk profile (can be given multiple times, <profile>=<dingtalk-url>).").Required())
-	requestTimeout   = kingpin.Flag("ding.timeout", "Timeout for invoking DingTalk webhook.").Default("5s").Duration()
-	templateFileName = kingpin.Flag("template.file", "Customized template file (see template/default.tmpl for example)").Default("").String()
+	listenAddress      = kingpin.Flag("web.listen-address", "The address to listen on for web interface.").Default(":8060").String()
+	dingTalkProfiles   = DingTalkProfiles(kingpin.Flag("ding.profile", "Custom DingTalk profile (can be given multiple times, <profile>=<dingtalk-url>).").Required())
+	requestTimeout     = kingpin.Flag("ding.timeout", "Timeout for invoking DingTalk webhook.").Default("5s").Duration()
+	templateFileName   = kingpin.Flag("template.file", "Customized template file (see template/default.tmpl for example)").Default("").String()
+	MonitorCoreAddress = kingpin.Flag("monitor-core.endpoint", "The endpoint of monitor-core.").Default("").String()
+	LinkedseeUrl       = kingpin.Flag("linkedsee.url", "The url of linkedsee").Default("http://www.linkedsee.com/alarm/cloudchannel").String()
+	LinkedseeToken     = kingpin.Flag("linkedsee.token", "The token of linkedsee").Default("").String()
 )
 
 func main() {
@@ -35,6 +40,21 @@ func main() {
 
 	logger := promlog.New(allowedLevel)
 	level.Info(logger).Log("msg", "Starting prometheus-webhook-dingtalk", "version", version.Info())
+
+	if *MonitorCoreAddress != "" {
+		notifier.MonitorCoreAddress = *MonitorCoreAddress
+	} else {
+		level.Error(logger).Log("msg", "Error connect monitor-core fail")
+		os.Exit(1)
+	}
+
+	notifier.LinkedseeUrl = *LinkedseeUrl
+	if *LinkedseeToken != "" {
+		notifier.LinkedseeToken = *LinkedseeToken
+	} else {
+		level.Error(logger).Log("msg", "Error Linkedsee token")
+		os.Exit(1)
+	}
 
 	// Load & validate customized template file
 	if *templateFileName != "" {
