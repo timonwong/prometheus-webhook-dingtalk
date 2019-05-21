@@ -5,14 +5,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
 	"github.com/timonwong/prometheus-webhook-dingtalk/models"
 	"github.com/timonwong/prometheus-webhook-dingtalk/template"
+
+	mysql "github.com/timonwong/prometheus-webhook-dingtalk/middleware"
 )
 
-func BuildDingTalkNotification(promMessage *models.WebhookMessage) (*models.DingTalkNotification, error) {
+func BuildDingTalkNotification(dingding string, promMessage *models.WebhookMessage) (*models.DingTalkNotification, error) {
 	title, err := template.ExecuteTextString(`{{ template "ding.link.title" . }}`, promMessage)
 	if err != nil {
 		fmt.Println(err)
@@ -23,7 +26,7 @@ func BuildDingTalkNotification(promMessage *models.WebhookMessage) (*models.Ding
 		fmt.Println(err)
 		return nil, err
 	}
-	buf,_:= json.Marshal(*promMessage.Data)
+	buf, _ := json.Marshal(*promMessage.Data)
 	fmt.Println(string(buf))
 
 	var buttons []models.DingTalkNotificationButton
@@ -37,14 +40,16 @@ func BuildDingTalkNotification(promMessage *models.WebhookMessage) (*models.Ding
 	notification := &models.DingTalkNotification{
 		MessageType: "text",
 		Text: &models.DingTalkNotificationText{
-			Title:  title,
+			Title:   title,
 			Content: content,
 		},
 	}
 
-	fmt.Println(promMessage.CommonLabels, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+	fmt.Println(promMessage.Status, promMessage.CommonLabels, "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 
 	notification.At = new(models.DingTalkNotificationAt)
+	alarm := models.Alarm{Dingding: dingding, Title: title, Content: content, Status: promMessage.Status}
+
 	if v, ok := map[string]string(promMessage.CommonLabels)["at"]; ok {
 
 		info := map[string]string{"name": v, "on_duty_date": fmt.Sprintf("%v", time.Now().Day())}
@@ -60,8 +65,22 @@ func BuildDingTalkNotification(promMessage *models.WebhookMessage) (*models.Ding
 		}
 
 		head := map[string]string{"Servicetoken": LinkedseeToken, "Content-Type": "application/json"}
-
+		alarm.Attendance = v
 		for _, recver := range resp.Data {
+			//短信告警
+			if _, err := httpClient(LinkedseeUrl, "GET", head, SendAlarm{
+				Receiver: recver,
+				Type:     "sms",
+				Title:    "alarm_sms",
+				Content:  content,
+			}); err != nil {
+				fmt.Println(err.Error())
+			}
+
+			//告警回执，不打电话
+			if strings.ToUpper(promMessage.Status) == "RESOLVED" {
+				continue
+			}
 
 			//电话告警
 			if _, err := httpClient(LinkedseeUrl, "GET", head, SendAlarm{
@@ -73,17 +92,13 @@ func BuildDingTalkNotification(promMessage *models.WebhookMessage) (*models.Ding
 				fmt.Println(err.Error())
 			}
 
-			//短信告警
-			if _, err := httpClient(LinkedseeUrl, "GET", head, SendAlarm{
-				Receiver: recver,
-				Type:     "sms",
-				Title:    "alarm_sms",
-				Content:  content,
-			}); err != nil {
-				fmt.Println(err.Error())
-			}
 		}
+	}
 
+	if mysql.SAVE_TO_MYSQL {
+		if err := mysql.GormDB.Create(alarm).Error; err != nil {
+			fmt.Println(err.Error())
+		}
 	}
 
 	return notification, nil
