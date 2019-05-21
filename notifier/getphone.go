@@ -24,9 +24,15 @@ type SendAlarm struct {
 }
 
 type Response struct {
-	Status  bool     `json:"status"`
-	Message string   `json:"message"`
-	Data    []string `json:"data"`
+	Status  bool   `json:"status"`
+	Message string `json:"message"`
+	Data    []User `json:"data"`
+}
+
+type User struct {
+	Name  string `json:"name"`
+	Phone string `json:"phone"`
+	Email string `json:"email"`
 }
 
 func httpClient(url string, method string, head map[string]string, body interface{}) ([]byte, error) {
@@ -55,7 +61,7 @@ func httpClient(url string, method string, head map[string]string, body interfac
 		buf, _ = json.Marshal(body)
 	}
 
-	if req, err := http.NewRequest(method, url, bytes.NewBuffer([]byte(buf))); err != nil {
+	if req, err := http.NewRequest(method, url, bytes.NewBuffer(buf)); err != nil {
 		log.Println(err.Error())
 		return nil, err
 	} else {

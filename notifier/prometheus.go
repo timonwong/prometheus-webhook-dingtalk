@@ -49,27 +49,28 @@ func BuildDingTalkNotification(dingding string, promMessage *models.WebhookMessa
 
 	notification.At = new(models.DingTalkNotificationAt)
 	alarm := models.Alarm{Dingding: dingding, Title: title, Content: content, Status: promMessage.Status}
-
+	users := []string{}
 	if v, ok := map[string]string(promMessage.CommonLabels)["at"]; ok {
 
-		info := map[string]string{"name": v, "on_duty_date": fmt.Sprintf("%v", time.Now().Day())}
-		fmt.Println("request info:", info)
-		response, _ := httpClient(MonitorCoreAddress, "GET", nil, info) //请求monitor-core获取电话号码
+		uri := fmt.Sprintf("%v?name=%v&on_duty_date=%v", MonitorCoreAddress, v, fmt.Sprintf("%v", time.Now().Day()))
+		fmt.Println("request info:", uri)
+		response, _ := httpClient(uri, "GET", nil, "") //请求monitor-core获取电话号码
 
 		var resp Response
 		if err := json.Unmarshal(response, &resp); err != nil {
 			fmt.Println("request err:", err)
 		} else {
-			notification.At.AtMobiles = resp.Data //钉钉@人员列表
 			fmt.Println("response data:", resp.Data)
 		}
 
 		head := map[string]string{"Servicetoken": LinkedseeToken, "Content-Type": "application/json"}
-		alarm.Attendance = v
 		for _, recver := range resp.Data {
 			//短信告警
+			notification.At.AtMobiles = append(notification.At.AtMobiles, recver.Phone)
+			users = append(users, recver.Name)
+
 			if _, err := httpClient(LinkedseeUrl, "GET", head, SendAlarm{
-				Receiver: recver,
+				Receiver: recver.Phone,
 				Type:     "sms",
 				Title:    "alarm_sms",
 				Content:  content,
@@ -84,7 +85,7 @@ func BuildDingTalkNotification(dingding string, promMessage *models.WebhookMessa
 
 			//电话告警
 			if _, err := httpClient(LinkedseeUrl, "GET", head, SendAlarm{
-				Receiver: recver,
+				Receiver: recver.Phone,
 				Type:     "phone",
 				Title:    "alarm_phone",
 				Content:  string(content),
@@ -94,7 +95,7 @@ func BuildDingTalkNotification(dingding string, promMessage *models.WebhookMessa
 
 		}
 	}
-
+	alarm.Attendance = strings.Join(users, ",")
 	if mysql.SAVE_TO_MYSQL {
 		if err := mysql.GormDB.Create(alarm).Error; err != nil {
 			fmt.Println(err.Error())
