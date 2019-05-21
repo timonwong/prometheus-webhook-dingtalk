@@ -19,6 +19,8 @@ import (
 	"github.com/timonwong/prometheus-webhook-dingtalk/template"
 	"github.com/timonwong/prometheus-webhook-dingtalk/webrouter"
 	"gopkg.in/alecthomas/kingpin.v2"
+
+	mysql "github.com/timonwong/prometheus-webhook-dingtalk/middleware"
 )
 
 var (
@@ -29,6 +31,12 @@ var (
 	MonitorCoreAddress = kingpin.Flag("monitor-core.endpoint", "The endpoint of monitor-core.").Default("").String()
 	LinkedseeUrl       = kingpin.Flag("linkedsee.url", "The url of linkedsee").Default("http://www.linkedsee.com/alarm/cloudchannel").String()
 	LinkedseeToken     = kingpin.Flag("linkedsee.token", "The token of linkedsee").Default("").String()
+	save_to_mysql      = kingpin.Flag("alarm.save", "trun on alarm save").Default("false").Bool()
+	mysql_user         = kingpin.Flag("mysql.user", "mysql user").Default("").String()
+	mysql_passwd       = kingpin.Flag("mysql.passwd", "mysql passwd").Default("").String()
+	mysql_host         = kingpin.Flag("mysql.host", "mysql host").Default("").String()
+	mysql_port         = kingpin.Flag("mysql.port", "mysql port").Default("3306").Int()
+	mysql_database     = kingpin.Flag("mysql.database", "mysql database").Default("").String()
 )
 
 func main() {
@@ -40,6 +48,14 @@ func main() {
 
 	logger := promlog.New(allowedLevel)
 	level.Info(logger).Log("msg", "Starting prometheus-webhook-dingtalk", "version", version.Info())
+
+	mysql.SAVE_TO_MYSQL = *save_to_mysql
+	mysql.MYSQL_USER = *mysql_user
+	mysql.MYSQL_PASSWD = *mysql_passwd
+	mysql.MYSQL_HOST = *mysql_host
+	mysql.MYSQL_PORT = *mysql_port
+	mysql.MYSQL_DATABASE = *mysql_database
+	mysql.DBinit()
 
 	if *MonitorCoreAddress != "" {
 		notifier.MonitorCoreAddress = *MonitorCoreAddress
