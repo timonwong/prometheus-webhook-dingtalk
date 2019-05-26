@@ -78,8 +78,8 @@ func BuildDingTalkNotification(dingding string, promMessage *models.WebhookMessa
 				fmt.Println(err.Error())
 			}
 
-			//告警回执，不打电话
-			if strings.ToUpper(promMessage.Status) == "RESOLVED" {
+			//告警回执，不打电话, 基础设施的也不打电话
+			if strings.ToUpper(promMessage.Status) == "RESOLVED" || v == "base_service" {
 				continue
 			}
 
