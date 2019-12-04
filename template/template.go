@@ -7,6 +7,7 @@ import (
 	"text/template"
 
 	"github.com/Masterminds/sprig"
+
 	"github.com/timonwong/prometheus-webhook-dingtalk/template/internal/deftmpl"
 )
 

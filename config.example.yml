@@ -1,0 +1,7 @@
+# timeout: 5s
+# template: template/default.tmpl
+targets:
+  webhook1:
+    url: https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxxxxx
+  webhook2:
+    url: https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxxxxx

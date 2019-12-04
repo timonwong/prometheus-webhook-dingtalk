@@ -5,3 +5,4 @@
 *.tar.gz
 coverage.txt
 /prometheus-webhook-dingtalk
+/config.yml
