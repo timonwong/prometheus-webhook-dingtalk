@@ -61,5 +61,6 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 type Target struct {
-	URL string `yaml:"url"`
+	URL    string `yaml:"url"`
+	Secret string `yaml:"secret"`
 }

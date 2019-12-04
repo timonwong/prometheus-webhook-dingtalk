@@ -3,5 +3,7 @@
 targets:
   webhook1:
     url: https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxxxxx
+    # secret for signature
+    secret: this_is_secret
   webhook2:
     url: https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxxxxx
