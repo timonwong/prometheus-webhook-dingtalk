@@ -19,19 +19,32 @@ make
 ## Usage
 
 ```
-usage: prometheus-webhook-dingtalk --ding.profile=DING.PROFILE [<flags>]
+usage: prometheus-webhook-dingtalk [<flags>]
 
 Flags:
-  -h, --help              Show context-sensitive help (also try --help-long and --help-man).
-      --web.listen-address=":8060"
-                          The address to listen on for web interface.
-      --ding.profile=DING.PROFILE ...
-                          Custom DingTalk profile (can be given multiple times, <profile>=<dingtalk-url>).
-      --ding.timeout=5s   Timeout for invoking DingTalk webhook.
-      --template.file=""  Customized template file (see template/default.tmpl for example)
-      --log.level=info    Only log messages with the given severity or above. One of: [debug, info, warn, error]
-      --version           Show application version.
+  -h, --help               Show context-sensitive help (also try --help-long and --help-man).
+      --web.listen-address=:8060
+                           The address to listen on for web interface.
+      --config.file=config.yml
+                           Path to the configuration file.
+      --log.level=info     Only log messages with the given severity or above. One of: [debug, info, warn, error]
+      --log.format=logfmt  Output format of log messages. One of: [logfmt, json]
+      --version            Show application version.
 
+```
+
+## Configuration
+
+Example configuration
+
+```yaml
+# timeout: 5s
+# template: template/default.tmpl
+targets:
+  webhook1:
+    url: https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxxxxx
+  webhook2:
+    url: https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxxxxx
 ```
 
 ## Using Docker

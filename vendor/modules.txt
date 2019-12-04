@@ -64,3 +64,5 @@ golang.org/x/crypto/scrypt
 golang.org/x/sys/windows
 # gopkg.in/alecthomas/kingpin.v2 v2.2.6
 gopkg.in/alecthomas/kingpin.v2
+# gopkg.in/yaml.v2 v2.2.7
+gopkg.in/yaml.v2

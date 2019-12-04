@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+
 	"github.com/timonwong/prometheus-webhook-dingtalk/models"
 	"github.com/timonwong/prometheus-webhook-dingtalk/template"
 )
