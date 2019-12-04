@@ -1,91 +1,140 @@
-# Copyright 2015 The Prometheus Authors
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-# http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+GO    := go
 
-GO           := GO15VENDOREXPERIMENT=1 go
-FIRST_GOPATH := $(firstword $(subst :, ,$(shell $(GO) env GOPATH)))
-PROMU        := $(FIRST_GOPATH)/bin/promu
+REPO_PATH               ?= github.com/timonwong/prometheus-webhook-dingtalk
+TESTARGS                ?= -v -race
+COVERARGS               ?= -coverprofile=coverage.txt -covermode=atomic
+TEST                    ?= $(shell go list ./... | grep -v '/vendor/')
+TESTPKGS                ?= $(shell go list ./... | grep -v '/cmd/')
+GOFMT_FILES             ?= $(shell find . -name '*.go' | grep -v vendor | xargs)
+FIRST_GOPATH            ?= $(firstword $(subst :, ,$(shell $(GO) env GOPATH)))
+PROMU                   ?= $(FIRST_GOPATH)/bin/promu
+GOLANGCI_LINT           ?= $(FIRST_GOPATH)/bin/golangci-lint
+GOCOV                   ?= $(FIRST_GOPATH)/bin/gocov
+GOCOV_HTML              ?= $(FIRST_GOPATH)/bin/gocov-html
+GOIMPORTS               ?= $(FIRST_GOPATH)/bin/goimports
+GO_BINDATA              ?= $(FIRST_GOPATH)/bin/go-bindata
 
-PREFIX                  ?= $$(pwd)
-BIN_DIR                 ?= $$(pwd)
+PREFIX                  ?= $(shell pwd)
+BIN_DIR                 ?= $(shell pwd)
 DOCKER_IMAGE_NAME       ?= prometheus-webhook-dingtalk
-DOCKER_IMAGE_TAG        ?= $(subst /,-,$$(git rev-parse --abbrev-ref HEAD))
+DOCKER_IMAGE_TAG        ?= $(subst /,-,$(shell git rev-parse --abbrev-ref HEAD))
 
-TESTARGS                ?= -race -v
-VETARGS                 ?= -all
-COVERARGS               ?= -coverprofile=profile.out -covermode=atomic
-TEST                    ?= $$(go list ./... | grep -v '/vendor/')
-GOFMT_FILES             ?= $$(find . -name '*.go' | grep -v vendor)
+export GOFLAGS=-mod=vendor
+export REPO_PATH
 
-all: format build test
+_comma := ,
+_space :=
+_space +=
 
-test: fmtcheck
+
+.PHONY: all
+all: format test
+
+
+$(GOLANGCI_LINT):
+	@echo ">> installing linter"
+	@$(GO) install "github.com/golangci/golangci-lint/cmd/golangci-lint"
+
+
+$(GOCOV):
+	@echo ">> installing gocov tool"
+	@$(GO) install "github.com/axw/gocov/gocov"
+
+
+$(GOCOV_HTML):
+	@echo ">> installing gocov-html tool"
+	@$(GO) install "github.com/matm/gocov-html"
+
+
+$(GOIMPORTS):
+	@echo ">> installing goimports tool"
+	@$(GO) install "golang.org/x/tools/cmd/goimports"
+
+
+$(GO_BINDATA):
+	@echo ">> installing go-bindata"
+	@$(GO) install github.com/go-bindata/go-bindata/...
+
+
+.PHONY: dep
+dep:
+	@$(GO) mod vendor
+
+
+.PHONY: test
+test:
 	@echo ">> running tests"
-	@$(GO) test $(TEST) $(TESTARGS)
+	@$(GO) test $(TESTARGS) $(TEST)
 
-cover: fmtcheck
+
+.PHONY: cover
+cover: $(GOCOV) $(GOCOV_HTML)
 	@echo ">> running test coverage"
-	rm -f coverage.txt
-	@for d in $(TEST); do \
-		go test $(TESTARGS) $(COVERARGS) $$d; \
-		if [ -f profile.out ]; then \
-			cat profile.out >> coverage.txt; \
-			rm profile.out; \
-		fi \
-	done
+	@rm -f coverage.txt
+	@$(GO) test $(TESTARGS) $(COVERARGS) -coverpkg "$(subst $(_space),$(_comma),$(TESTPKGS))" $(TEST) && \
+		$(GOCOV) convert coverage.txt >coverage.json && \
+		$(GOCOV) report coverage.json && \
+		$(GOCOV_HTML) coverage.json >coverage.html
 
-format:
+
+.PHONY: lint
+lint: $(GOLANGCI_LINT)
+	@echo ">> linting code"
+	@$(GOLANGCI_LINT) run \
+		--deadline=10m \
+		--disable-all \
+		--enable=gofmt \
+		--enable=goimports \
+		--enable=govet \
+		--enable=typecheck \
+		--enable=varcheck \
+		--enable=errcheck \
+		--enable=staticcheck \
+		--enable=gas \
+		--enable=ineffassign \
+		--enable=gosimple \
+		--enable=maligned \
+		--enable=golint \
+		./...
+
+
+.PHONY: format
+format: $(GOIMPORTS)
 	@echo ">> formatting code"
-	@gofmt -w $(GOFMT_FILES)
+	@$(GOIMPORTS) -local "git.meiqia.com" -w $(GOFMT_FILES)
 
-fmtcheck:
-	@echo ">> checking code style"
-	@sh -c "'$(CURDIR)/scripts/gofmtcheck.sh'"
 
-vet:
-	@echo ">> vetting code"
-	@go tool vet $(VETARGS) $$(ls -d */ | grep -v vendor) ; if [ $$? -eq 1 ]; then \
-		echo ""; \
-		echo "Vet found suspicious constructs. Please check the reported constructs"; \
-		echo "and fix them if necessary before submitting the code for review."; \
-		exit 1; \
-	fi
-
-assets: go-bindata template/internal/deftmpl/bindata.go
-
-go-bindata:
-	-@$(GO) get -u github.com/jteeuwen/go-bindata/...
+.PHONY: assets
+assets: $(GO_BINDATA) template/internal/deftmpl/bindata.go
 
 template/internal/deftmpl/bindata.go: template/default.tmpl
-	@go-bindata $(bindata_flags) -mode 420 -modtime 1 -pkg deftmpl -o template/internal/deftmpl/bindata.go template/default.tmpl
+	@$(GO_BINDATA) $(bindata_flags) -mode 420 -modtime 1 -pkg deftmpl -o template/internal/deftmpl/bindata.go template/default.tmpl
 
+
+.PHONY: build
 build: promu
 	@echo ">> building binaries"
 	@$(PROMU) build --prefix $(PREFIX)
 
+
 # Will build both the front-end as well as the back-end
+.PHONY: build-all
 build-all: assets build
 
+
+.PHONY: tarball
 tarball: promu
 	@echo ">> building release tarball"
 	@$(PROMU) tarball --prefix $(PREFIX) $(BIN_DIR)
 
+
+.PHONY: docker
 docker:
 	@echo ">> building docker image"
 	@docker build -t "$(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG)" .
 
-promu:
-	@GOOS=$(shell uname -s | tr A-Z a-z) \
-		GOARCH=$(subst x86_64,amd64,$(patsubst i%86,386,$(shell uname -m))) \
-		$(GO) get -u github.com/prometheus/promu
 
-.PHONY: all format build test cover vet tarball docker promu fmtcheck assets build-all
+.PHONY: promu
+promu:
+	@echo ">> installing promu"
+	@$(GO) install github.com/prometheus/promu
