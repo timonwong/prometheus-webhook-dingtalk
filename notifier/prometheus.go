@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/timonwong/prometheus-webhook-dingtalk/models"
@@ -16,6 +17,7 @@ func BuildDingTalkNotification(promMessage *models.WebhookMessage) (*models.Ding
 	if err != nil {
 		return nil, err
 	}
+	title = fmt.Sprintf("%s ~ %s", title, time.Now().Format("2006.01.02 15:04:05"))
 	content, err := template.ExecuteTextString(`{{ template "ding.link.content" . }}`, promMessage)
 	if err != nil {
 		return nil, err
