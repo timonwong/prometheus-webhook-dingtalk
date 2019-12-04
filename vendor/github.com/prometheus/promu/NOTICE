@@ -1,0 +1,10 @@
+Prometheus Utility Tool
+Copyright 2013-2016 The Prometheus Authors
+
+
+The following components were used in this product as inspiration:
+
+Glu
+https://github.com/gliderlabs/glu
+Copyright 2015 Glider Labs
+Licensed under the MIT License

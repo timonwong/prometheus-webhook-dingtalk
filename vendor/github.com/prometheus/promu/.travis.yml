@@ -1,0 +1,13 @@
+sudo: false
+
+language: go
+
+go:
+- 1.12.x
+- 1.x
+
+go_import_path: github.com/prometheus/promu
+
+script:
+- make check_license style lint unused test-short
+- git diff --exit-code
