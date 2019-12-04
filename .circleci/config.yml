@@ -2,17 +2,21 @@ version: 2.1
 
 orbs:
   prometheus: prometheus/prometheus@0.1.0
+  go: circleci/go@0.2.0
 
 jobs:
   test:
-    # Whenever the Go version is updated here, .travis.yml and .promu.yml
-    # should also be updated.
+    # Whenever the Go version is updated here, .promu.yml should also be updated.
     docker:
       - image: circleci/golang:1.13
 
     steps:
-      - run: make dep
-      - run: make lint test
+      - prometheus/setup_environment
+      - go/load-cache:
+        key: v1-go-mod
+      - run: make lint
+      - go/save-cache:
+          key: v1-go-mod
 
 workflows:
   version: 2
