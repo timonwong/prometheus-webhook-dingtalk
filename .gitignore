@@ -2,6 +2,7 @@
 /.vscode
 /.build
 
+/vendor
 *.tar.gz
 coverage.txt
 /prometheus-webhook-dingtalk
