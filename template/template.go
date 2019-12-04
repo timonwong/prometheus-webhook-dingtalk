@@ -6,6 +6,7 @@ import (
 	"sync"
 	"text/template"
 
+	"github.com/Masterminds/sprig"
 	"github.com/timonwong/prometheus-webhook-dingtalk/template/internal/deftmpl"
 )
 
@@ -50,6 +51,7 @@ func (t *safeTemplate) UpdateTemplate(newTpl string) (oldTpl string, err error) 
 
 	tpl, err := template.New("alert").
 		Funcs(defaultFuncs).
+		Funcs(sprig.TxtFuncMap()).
 		Option("missingkey=zero").
 		Parse(newTpl)
 	if err != nil {
