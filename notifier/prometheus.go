@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/timonwong/prometheus-webhook-dingtalk/models"
@@ -12,6 +13,7 @@ import (
 )
 
 func BuildDingTalkNotification(promMessage *models.WebhookMessage) (*models.DingTalkNotification, error) {
+	promMessage.AlertTime = time.Now().Format("2006.01.02 15:04:05")
 	title, err := template.ExecuteTextString(`{{ template "ding.link.title" . }}`, promMessage)
 	if err != nil {
 		return nil, err
