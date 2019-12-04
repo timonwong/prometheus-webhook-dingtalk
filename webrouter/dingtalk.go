@@ -61,5 +61,5 @@ func (rs *DingTalkResource) SendNotification(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	io.WriteString(w, "OK")
+	io.WriteString(w, "OK") // nolint: errcheck
 }

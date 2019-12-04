@@ -3,7 +3,6 @@ package notifier
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -21,13 +20,6 @@ func BuildDingTalkNotification(promMessage *models.WebhookMessage) (*models.Ding
 	content, err := template.ExecuteTextString(`{{ template "ding.link.content" . }}`, promMessage)
 	if err != nil {
 		return nil, err
-	}
-	var buttons []models.DingTalkNotificationButton
-	for i, alert := range promMessage.Alerts.Firing() {
-		buttons = append(buttons, models.DingTalkNotificationButton{
-			Title:     fmt.Sprintf("Graph for alert #%d", i+1),
-			ActionURL: alert.GeneratorURL,
-		})
 	}
 
 	notification := &models.DingTalkNotification{
