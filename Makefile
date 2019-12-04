@@ -135,6 +135,6 @@ docker:
 
 
 .PHONY: promu
-promu:
+promu: dep
 	@echo ">> installing promu"
 	@$(GO) install github.com/prometheus/promu
