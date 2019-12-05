@@ -51,7 +51,7 @@ func (rs *DingTalkResource) SendNotification(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	notification, err := notifier.BuildDingTalkNotification(&promMessage)
+	notification, err := notifier.BuildDingTalkNotification(target, &promMessage)
 	if err != nil {
 		level.Error(logger).Log("msg", "Failed to build notification", "err", err)
 		http.Error(w, "Bad Request", http.StatusBadRequest)
