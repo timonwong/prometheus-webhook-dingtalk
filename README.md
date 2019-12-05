@@ -52,6 +52,13 @@ targets:
     secret: SEC000000000000000000000
   webhook2:
     url: https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxxxxx
+  webhook_mention_all:
+    url: https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxxxxx
+    mention:
+      all: true
+  webhook_mention_users:
+    mention:
+      mobiles: ['156xxxx8827', '189xxxx8325']
 ```
 
 ## Using Docker

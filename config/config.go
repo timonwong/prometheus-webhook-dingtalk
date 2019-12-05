@@ -61,6 +61,12 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 type Target struct {
-	URL    string `yaml:"url"`
-	Secret string `yaml:"secret"`
+	URL     string         `yaml:"url"`
+	Secret  string         `yaml:"secret"`
+	Mention *TargetMention `yaml:"mention"`
+}
+
+type TargetMention struct {
+	All     bool     `yaml:"all"`
+	Mobiles []string `yaml:"mobiles"`
 }

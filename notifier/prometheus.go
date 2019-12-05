@@ -18,7 +18,7 @@ import (
 	"github.com/timonwong/prometheus-webhook-dingtalk/template"
 )
 
-func BuildDingTalkNotification(promMessage *models.WebhookMessage) (*models.DingTalkNotification, error) {
+func BuildDingTalkNotification(target config.Target, promMessage *models.WebhookMessage) (*models.DingTalkNotification, error) {
 	promMessage.AlertTime = time.Now().Format("2006.01.02 15:04:05")
 	title, err := template.ExecuteTextString(`{{ template "ding.link.title" . }}`, promMessage)
 	if err != nil {
@@ -36,15 +36,19 @@ func BuildDingTalkNotification(promMessage *models.WebhookMessage) (*models.Ding
 			Text:  content,
 		},
 	}
+
+	// Build mention
+	if target.Mention != nil {
+		notification.At = &models.DingTalkNotificationAt{
+			IsAtAll:   target.Mention.All,
+			AtMobiles: target.Mention.Mobiles,
+		}
+	}
+
 	return notification, nil
 }
 
 func SendDingTalkNotification(httpClient *http.Client, target config.Target, notification *models.DingTalkNotification) (*models.DingTalkNotificationResponse, error) {
-	body, err := json.Marshal(&notification)
-	if err != nil {
-		return nil, errors.Wrap(err, "error encoding DingTalk request")
-	}
-
 	targetURL := target.URL
 	// Calculate signature when secret is provided
 	if target.Secret != "" {
@@ -66,6 +70,11 @@ func SendDingTalkNotification(httpClient *http.Client, target config.Target, not
 		u.RawQuery = qs.Encode()
 
 		targetURL = u.String()
+	}
+
+	body, err := json.Marshal(&notification)
+	if err != nil {
+		return nil, errors.Wrap(err, "error encoding DingTalk request")
 	}
 
 	httpReq, err := http.NewRequest("POST", targetURL, bytes.NewReader(body))
