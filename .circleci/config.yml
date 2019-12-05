@@ -14,7 +14,7 @@ jobs:
       - prometheus/setup_environment
       - go/load-cache:
         key: v1-go-mod
-      - run: make lint
+      - run: make
       - go/save-cache:
           key: v1-go-mod
       - prometheus/store_artifact:
