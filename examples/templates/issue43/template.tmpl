@@ -1,0 +1,17 @@
+{{/*
+下面的 {{ .StartsAt | date "2006.01.02 15:04:05" }} 会以本地时间格式化
+需要 UTC 时间, 还可以用 {{ dateInZone "2006.01.02 15:04:05" (.StartsAt) "UTC" }}
+指定时区(+8), 可以用 {{ dateInZone "2006.01.02 15:04:05" (.StartsAt) "Asia/Shanghai" }}
+*/}}
+
+{{ define "__text_alert_list" }}{{ range . }}
+**Time:** {{ .StartsAt | date "2006.01.02 15:04:05" }}
+**Labels**
+{{ range .Labels.SortedPairs }}> - {{ .Name }}: {{ .Value | markdown | html }}
+{{ end }}
+**Annotations**
+{{ range .Annotations.SortedPairs }}> - {{ .Name }}: {{ .Value | markdown | html }}
+{{ end }}
+**Source:** [{{ .GeneratorURL }}]({{ .GeneratorURL }})
+
+{{ end }}{{ end }}

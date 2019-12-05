@@ -1,110 +1,84 @@
+// Copyright 2015 Prometheus Team
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package template
 
 import (
 	"bytes"
-	"strings"
-	"sync"
+	"io/ioutil"
+	"path/filepath"
 	"text/template"
+	tmpltext "text/template"
 
 	"github.com/Masterminds/sprig"
 
-	"github.com/timonwong/prometheus-webhook-dingtalk/template/internal/deftmpl"
+	"github.com/timonwong/prometheus-webhook-dingtalk/asset"
 )
 
-var (
-	alertTemplate safeTemplate
-	defaultFuncs  = map[string]interface{}{
-		"toUpper": strings.ToUpper,
-		"toLower": strings.ToLower,
-		"title":   strings.Title,
-		// join is equal to strings.Join but inverts the argument order
-		// for easier pipelining in templates.
-		"join": func(sep string, s []string) string {
-			return strings.Join(s, sep)
-		},
-		"markdown": markdownEscapeString,
-	}
-	isMarkdownSpecial [128]bool
-)
-
-type safeTemplate struct {
-	*template.Template
-	current string
-	mu      sync.RWMutex
+type Template struct {
+	tmpl *tmpltext.Template
 }
 
-func init() {
+// FromGlobs calls ParseGlob on all path globs provided and returns the
+// resulting Template.
+func FromGlobs(paths ...string) (*Template, error) {
+	t := &Template{
+		tmpl: template.New("").Option("missingkey=zero"),
+	}
 	var err error
+	t.tmpl = t.tmpl.Funcs(defaultFuncs).Funcs(sprig.TxtFuncMap())
 
-	_, err = UpdateTemplate(string(deftmpl.MustAsset("template/default.tmpl")))
+	f, err := asset.Assets.Open("/templates/default.tmpl")
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-
-	for _, c := range "_*`" {
-		isMarkdownSpecial[c] = true
-	}
-}
-
-func (t *safeTemplate) UpdateTemplate(newTpl string) (oldTpl string, err error) {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-
-	tpl, err := template.New("alert").
-		Funcs(defaultFuncs).
-		Funcs(sprig.TxtFuncMap()).
-		Option("missingkey=zero").
-		Parse(newTpl)
+	defer f.Close()
+	b, err := ioutil.ReadAll(f)
 	if err != nil {
-		return
+		return nil, err
+	}
+	if t.tmpl, err = t.tmpl.Parse(string(b)); err != nil {
+		return nil, err
 	}
 
-	oldTpl = t.current
-	t.Template = tpl
-	t.current = newTpl
-	return
-}
-
-func (t *safeTemplate) Clone() (*template.Template, error) {
-	t.mu.RLock()
-	defer t.mu.RUnlock()
-
-	return t.Template.Clone()
-}
-
-func UpdateTemplate(newTpl string) (oldTpl string, err error) {
-	return alertTemplate.UpdateTemplate(newTpl)
-}
-
-func markdownEscapeString(s string) string {
-	b := make([]byte, 0, len(s))
-	buf := bytes.NewBuffer(b)
-
-	for _, c := range s {
-		if c < 128 && isMarkdownSpecial[c] {
-			buf.WriteByte('\\')
+	for _, tp := range paths {
+		// ParseGlob in the template packages errors if not at least one file is
+		// matched. We want to allow empty matches that may be populated later on.
+		p, err := filepath.Glob(tp)
+		if err != nil {
+			return nil, err
 		}
-		buf.WriteRune(c)
+		if len(p) > 0 {
+			if t.tmpl, err = t.tmpl.ParseGlob(tp); err != nil {
+				return nil, err
+			}
+		}
 	}
-	return buf.String()
+	return t, nil
 }
 
-func ExecuteTextString(text string, data interface{}) (string, error) {
+func (t *Template) ExecuteTextString(text string, data interface{}) (string, error) {
 	if text == "" {
 		return "", nil
 	}
-
-	tmpl, err := alertTemplate.Clone()
+	tmpl, err := t.tmpl.Clone()
 	if err != nil {
 		return "", err
 	}
-
 	tmpl, err = tmpl.New("").Option("missingkey=zero").Parse(text)
 	if err != nil {
 		return "", err
 	}
-
-	// reserve a buffer in 1k
 	var buf bytes.Buffer
 	err = tmpl.Execute(&buf, data)
 	return buf.String(), err
