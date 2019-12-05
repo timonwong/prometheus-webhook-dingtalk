@@ -20,9 +20,8 @@ tarball:
     - template/default.tmpl
 crossbuild:
   platforms:
-    - linux/amd64
     - darwin/amd64
     - windows/amd64
     - windows/386
-    - linux/arm
+    - linux/amd64
     - linux/arm64
