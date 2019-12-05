@@ -36,9 +36,10 @@ func LoadFile(filename string) (*Config, error) {
 }
 
 type Config struct {
-	Template string            `yaml:"template"` // Customized template file (see template/default.tmpl for example)
-	Timeout  time.Duration     `yaml:"timeout"`  // Timeout for invoking DingTalk webhook
-	Targets  map[string]Target `yaml:"targets"`
+	Template  string            `yaml:"template"`
+	Templates []string          `yaml:"templates"`
+	Timeout   time.Duration     `yaml:"timeout"`
+	Targets   map[string]Target `yaml:"targets"`
 }
 
 func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
@@ -55,6 +56,10 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		if !targetValidNameRe.MatchString(name) {
 			return fmt.Errorf("invalid target name: %s", name)
 		}
+	}
+
+	if c.Template != "" {
+		c.Templates = append(c.Templates, c.Template)
 	}
 
 	return nil

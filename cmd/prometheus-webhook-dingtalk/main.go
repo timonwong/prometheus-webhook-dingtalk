@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -10,20 +9,23 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
-	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/prometheus/common/promlog"
 	"github.com/prometheus/common/promlog/flag"
 	"github.com/prometheus/common/version"
 	"gopkg.in/alecthomas/kingpin.v2"
 
-	"github.com/timonwong/prometheus-webhook-dingtalk/chilog"
 	"github.com/timonwong/prometheus-webhook-dingtalk/config"
+	"github.com/timonwong/prometheus-webhook-dingtalk/pkg/chilog"
 	"github.com/timonwong/prometheus-webhook-dingtalk/template"
 	"github.com/timonwong/prometheus-webhook-dingtalk/webrouter"
 )
 
 func main() {
+	os.Exit(run())
+}
+
+func run() int {
 	var (
 		listenAddress = kingpin.Flag(
 			"web.listen-address",
@@ -45,31 +47,18 @@ func main() {
 	level.Info(logger).Log("msg", "Starting prometheus-webhook-dingtalk", "version", version.Info())
 	level.Info(logger).Log("msg", "Build context", version.BuildContext())
 
-	cfg, err := config.LoadFile(*configFile)
+	conf, err := config.LoadFile(*configFile)
 	if err != nil {
 		level.Error(logger).Log("msg", "Error reading configuration file", "err", err)
-		os.Exit(1)
+		return 1
 	}
 
-	// Load & validate customized template file
-	if cfg.Template != "" {
-		l := log.With(logger, "filename", cfg.Template)
-
-		b, err := ioutil.ReadFile(cfg.Template)
-		if err != nil {
-			level.Error(l).Log("msg", "Error reading customizable template file", "err", err)
-			os.Exit(1)
-		}
-
-		_, err = template.UpdateTemplate(string(b))
-		if err != nil {
-			level.Error(l).Log("msg", "Error parsing template file", "err", err)
-			os.Exit(1)
-		}
-
-		level.Info(l).Log("msg", "Using customized template")
-	} else {
-		level.Info(logger).Log("msg", "Using default template")
+	// Parse templates
+	level.Info(logger).Log("msg", "loading templates", "templates", strings.Join(conf.Templates, ";"))
+	tmpl, err := template.FromGlobs(conf.Templates...)
+	if err != nil {
+		level.Error(logger).Log("msg", "Failed to parse templates", "err", err)
+		return 1
 	}
 
 	// Print current targets configuration
@@ -80,7 +69,7 @@ func main() {
 		}
 
 		var paths []string
-		for name := range cfg.Targets {
+		for name := range conf.Targets {
 			paths = append(paths, fmt.Sprintf("http://%s:%s/dingtalk/%s/send", host, port, name))
 		}
 		l.Log("msg", "Webhook urls for prometheus alertmanager", "urls", strings.Join(paths, " "))
@@ -92,10 +81,11 @@ func main() {
 	r.Use(middleware.Recoverer)
 
 	dingTalkResource := &webrouter.DingTalkResource{
-		Logger:  logger,
-		Targets: cfg.Targets,
+		Logger:   logger,
+		Template: tmpl,
+		Targets:  conf.Targets,
 		HttpClient: &http.Client{
-			Timeout: cfg.Timeout,
+			Timeout: conf.Timeout,
 			Transport: &http.Transport{
 				Proxy:             http.ProxyFromEnvironment,
 				DisableKeepAlives: true,
@@ -107,6 +97,8 @@ func main() {
 	level.Info(logger).Log("msg", "Listening on address", "address", *listenAddress)
 	if err := http.ListenAndServe(*listenAddress, r); err != nil {
 		level.Error(logger).Log("msg", "Error starting HTTP server", "err", err)
-		os.Exit(1)
+		return 1
 	}
+
+	return 0
 }

@@ -24,8 +24,12 @@ STATICCHECK_IGNORE =
 build-all: assets build
 
 .PHONY: assets
-assets: template/internal/deftmpl/bindata.go
+assets: asset/assets_vfsdata.go
 
-template/internal/deftmpl/bindata.go: template/default.tmpl
-	GO111MODULE=$(GO111MODULE) $(GO) generate $(GOOPTS) ./generate.go
-	@$(GOFMT) -w ./template
+asset/assets_vfsdata.go: template/default.tmpl
+	GO111MODULE=$(GO111MODULE) $(GO) generate $(GOOPTS) ./asset
+	@$(GOFMT) -w ./asset
+
+.PHONY: clean
+clean:
+	- @rm -rf asset/assets_vfsdata.go
