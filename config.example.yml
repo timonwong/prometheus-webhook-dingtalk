@@ -1,4 +1,9 @@
+## Request timeout
 # timeout: 5s
+
+## Customizable template file path
+## In docker, by default the current working directory is set to /prometheus-webhook-dingtalk
+## However it's recommended to use absolute path whenever possible
 # template: template/default.tmpl
 targets:
   webhook1:
