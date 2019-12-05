@@ -58,7 +58,7 @@ func (rs *DingTalkResource) SendNotification(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	robotResp, err := notifier.SendDingTalkNotification(rs.HttpClient, target.URL, notification)
+	robotResp, err := notifier.SendDingTalkNotification(rs.HttpClient, target, notification)
 	if err != nil {
 		level.Error(logger).Log("msg", "Failed to send notification", "err", err)
 		http.Error(w, "Bad Request", http.StatusBadRequest)
