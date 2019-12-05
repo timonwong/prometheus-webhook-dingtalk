@@ -17,6 +17,8 @@ jobs:
       - run: make lint
       - go/save-cache:
           key: v1-go-mod
+      - prometheus/store_artifact:
+          file: prometheus-webhook-dingtalk
 
 workflows:
   version: 2
