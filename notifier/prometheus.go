@@ -19,7 +19,6 @@ import (
 )
 
 func BuildDingTalkNotification(target config.Target, promMessage *models.WebhookMessage) (*models.DingTalkNotification, error) {
-	promMessage.AlertTime = time.Now().Format("2006.01.02 15:04:05")
 	title, err := template.ExecuteTextString(`{{ template "ding.link.title" . }}`, promMessage)
 	if err != nil {
 		return nil, err
