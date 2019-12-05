@@ -32,3 +32,4 @@ targets:
 
 - [ENHANCEMENT] Add various template functions from [sprig](http://masterminds.github.io/sprig/) #47
 - [ENHANCEMENT] Add signature support due to the new security enforcement requirement of dingtalk #49
+- [ENHANCEMENT] Add user mention support (all or specific mobiles) to dingtalk notification #54
