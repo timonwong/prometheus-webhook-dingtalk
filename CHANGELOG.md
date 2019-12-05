@@ -14,6 +14,8 @@ The example configuration file looks like:
 ## In docker, by default the current working directory is set to /prometheus-webhook-dingtalk
 ## However it's recommended to use absolute path whenever possible
 # template: template/default.tmpl
+
+## Targets, previously was known as "profiles"
 targets:
   webhook1:
     url: https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxxxxx
