@@ -24,6 +24,7 @@
 
 # Ensure GOBIN is not set during build so that promu is installed to the correct path
 unexport GOBIN
+unexport GOFLAGS
 
 GO           ?= go
 GOFMT        ?= $(GO)fmt
