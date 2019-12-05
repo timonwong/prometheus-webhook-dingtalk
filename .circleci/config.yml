@@ -19,6 +19,71 @@ jobs:
           key: v1-go-mod
       - prometheus/store_artifact:
           file: prometheus-webhook-dingtalk
+  build:
+    description: >
+      Cross-build and store the binaries.
+    machine:
+      enabled: true
+
+    steps:
+      - prometheus/setup_environment
+      - run: promu crossbuild -v
+      - persist_to_workspace:
+          root: .
+          paths:
+            - .build
+      - store_artifacts:
+          path: .build
+          destination: /build
+
+  publish_master:
+    description: >
+      Build and publish container images from the master branch.
+    docker:
+      - image: circleci/golang
+    steps:
+      - prometheus/setup_build_environment
+      - prometheus/publish_images:
+          registry: docker.io
+          organization: timonwong
+          login_variable: DOCKER_LOGIN
+          password_variable: DOCKER_PASSWORD
+      - prometheus/publish_images:
+          registry: quay.io
+          organization: timonwong
+          login_variable: QUAY_LOGIN
+          password_variable: QUAY_PASSWORD
+
+  publish_release:
+    description: >
+      Build and publish binaries and container images for a given release tag.
+    parameters:
+      image:
+        type: string
+        description: Custom container image.
+        default: circleci/golang
+
+    docker:
+      - image: << parameters.image >>
+
+    steps:
+      - prometheus/setup_build_environment
+      - run: promu crossbuild tarballs
+      - run: promu checksum .tarballs
+      - run: promu release .tarballs
+      - store_artifacts:
+          path: .tarballs
+          destination: releases
+      - prometheus/publish_release_images:
+          registry: docker.io
+          organization: timonwong
+          login_variable: DOCKER_LOGIN
+          password_variable: DOCKER_PASSWORD
+      - prometheus/publish_release_images:
+          registry: quay.io
+          organization: timonwong
+          login_variable: QUAY_LOGIN
+          password_variable: QUAY_PASSWORD
 
 workflows:
   version: 2
@@ -28,12 +93,12 @@ workflows:
           filters:
             tags:
               only: /.*/
-      - prometheus/build:
+      - build:
           name: build
           filters:
             tags:
               only: /.*/
-      - prometheus/publish_master:
+      - publish_master:
           context: timonwong-context
           requires:
             - test
@@ -41,7 +106,7 @@ workflows:
           filters:
             branches:
               only: master
-      - prometheus/publish_release:
+      - publish_release:
           context: timonwong-context
           requires:
             - test
