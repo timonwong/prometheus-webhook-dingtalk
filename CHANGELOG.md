@@ -1,3 +1,8 @@
+## 1.1.0 / unreleased
+
+- [ENHANCEMENT] Allow template customization for target individually. #58
+- [ENHANCEMENT] Change default template.
+
 ## 1.0.0
 
 **BREAKING CHANGES**

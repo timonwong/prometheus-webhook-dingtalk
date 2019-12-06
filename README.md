@@ -35,7 +35,7 @@ Flags:
 
 ## Configuration
 
-Example configuration
+常见问题可以看看 [FAQ](./FAQ_zh.md)
 
 ```yaml
 ## Request timeout
