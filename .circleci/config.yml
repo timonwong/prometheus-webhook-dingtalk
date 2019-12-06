@@ -151,11 +151,6 @@ jobs:
           organization: timonwong
           login_variable: DOCKER_LOGIN
           password_variable: DOCKER_PASSWORD
-      - publish_images:
-          registry: docker.pkg.github.com
-          organization: timonwong/prometheus-webhook-dingtalk
-          login_variable: GITHUB_LOGIN
-          password_variable: GITHUB_TOKEN
 
   publish_release:
     description: >
@@ -182,11 +177,6 @@ jobs:
           organization: timonwong
           login_variable: DOCKER_LOGIN
           password_variable: DOCKER_PASSWORD
-      - publish_release_images:
-          registry: docker.pkg.github.com
-          organization: timonwong/prometheus-webhook-dingtalk
-          login_variable: GITHUB_LOGIN
-          password_variable: GITHUB_TOKEN
 
 workflows:
   version: 2
