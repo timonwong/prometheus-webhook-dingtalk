@@ -1,11 +1,15 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/http"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
+	"time"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -94,11 +98,28 @@ func run() int {
 	}
 	r.Mount("/dingtalk", dingTalkResource.Routes())
 
-	level.Info(logger).Log("msg", "Listening on address", "address", *listenAddress)
-	if err := http.ListenAndServe(*listenAddress, r); err != nil {
-		level.Error(logger).Log("msg", "Error starting HTTP server", "err", err)
+	srv := http.Server{Addr: *listenAddress, Handler: r}
+	srvCh := make(chan struct{})
+
+	go func() {
+		level.Info(logger).Log("msg", "Listening on address", "address", srv.Addr)
+		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+			level.Error(logger).Log("msg", "Error starting HTTP server", "err", err)
+			close(srvCh)
+		}
+	}()
+
+	termCh := make(chan os.Signal, 1)
+	signal.Notify(termCh, os.Interrupt, syscall.SIGTERM)
+
+	select {
+	case <-termCh:
+		level.Info(logger).Log("msg", "Received SIGTERM, exiting gracefully...")
+		ctx, cancelFn := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancelFn()
+		_ = srv.Shutdown(ctx)
+		return 0
+	case <-srvCh:
 		return 1
 	}
-
-	return 0
 }
