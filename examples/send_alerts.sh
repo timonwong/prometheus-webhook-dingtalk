@@ -7,7 +7,7 @@ alerts1='{
         {
             "status": "firing",
             "labels": {
-                "alertname": "something_happend",
+                "alertname": "something_happened",
                 "env": "prod",
                 "instance": "server01.int:9100",
                 "job": "node",
@@ -16,7 +16,7 @@ alerts1='{
                 "supervisor": "runit"
             },
             "annotations": {
-                "summary": "Oops, something happend!"
+                "summary": "Oops, something happened!"
             },
             "startsAt": "2016-04-27T20:46:37.903Z",
             "endsAt": "0001-01-01T00:00:00Z",
@@ -25,7 +25,7 @@ alerts1='{
         {
             "status": "firing",
             "labels": {
-                "alertname": "something_happend",
+                "alertname": "something_happened",
                 "env": "staging",
                 "instance": "server02.int:9100",
                 "job": "node",
@@ -42,11 +42,11 @@ alerts1='{
         }
     ],
     "groupLabels": {
-        "alertname": "something_happend",
+        "alertname": "something_happened",
         "instance": "server01.int:9100"
     },
     "commonLabels": {
-        "alertname": "something_happend",
+        "alertname": "something_happened",
         "job": "node",
         "service": "prometheus_bot",
         "severity": "warning",

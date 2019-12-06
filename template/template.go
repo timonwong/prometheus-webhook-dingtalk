@@ -20,7 +20,7 @@ import (
 	"text/template"
 	tmpltext "text/template"
 
-	"github.com/Masterminds/sprig"
+	"github.com/Masterminds/sprig/v3"
 
 	"github.com/timonwong/prometheus-webhook-dingtalk/asset"
 )

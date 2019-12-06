@@ -1,9 +1,9 @@
 # github.com/Masterminds/goutils v1.1.0
 github.com/Masterminds/goutils
-# github.com/Masterminds/semver v1.5.0
-github.com/Masterminds/semver
-# github.com/Masterminds/sprig v2.22.0+incompatible
-github.com/Masterminds/sprig
+# github.com/Masterminds/semver/v3 v3.0.1
+github.com/Masterminds/semver/v3
+# github.com/Masterminds/sprig/v3 v3.0.0
+github.com/Masterminds/sprig/v3
 # github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751
 github.com/alecthomas/template
 github.com/alecthomas/template/parse
@@ -35,7 +35,7 @@ github.com/kr/logfmt
 github.com/matttproud/golang_protobuf_extensions/pbutil
 # github.com/mitchellh/copystructure v1.0.0
 github.com/mitchellh/copystructure
-# github.com/mitchellh/reflectwalk v1.0.0
+# github.com/mitchellh/reflectwalk v1.0.1
 github.com/mitchellh/reflectwalk
 # github.com/pkg/errors v0.8.1
 github.com/pkg/errors
@@ -61,7 +61,9 @@ github.com/shurcooL/httpfs/union
 github.com/shurcooL/httpfs/vfsutil
 # github.com/shurcooL/vfsgen v0.0.0-20181202132449-6a9ea43bcacd
 github.com/shurcooL/vfsgen
-# golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2
+# github.com/spf13/cast v1.3.0
+github.com/spf13/cast
+# golang.org/x/crypto v0.0.0-20191205180655-e7c4368fe9dd
 golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/scrypt
 # golang.org/x/sys v0.0.0-20191204072324-ce4227a45e2e
