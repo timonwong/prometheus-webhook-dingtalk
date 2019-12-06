@@ -42,8 +42,8 @@ Flags:
 # timeout: 5s
 
 ## Customizable templates path
-templates:
-  - templates/cutomization.tmpl
+# templates:
+#   - contrib/templates/legacy/template.tmpl
 
 ## Targets, previously was known as "profiles"
 targets:
