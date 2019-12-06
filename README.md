@@ -35,7 +35,7 @@ Flags:
 
 ## Configuration
 
-常见问题可以看看 [FAQ](./FAQ_zh.md)
+常见问题可以看看 [FAQ](./docs/FAQ_zh.md)
 
 ```yaml
 ## Request timeout

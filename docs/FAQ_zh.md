@@ -14,3 +14,15 @@
                                  back to Prometheus itself. If the URL has a path portion, it will be used to prefix all HTTP endpoints served by Prometheus. If omitted, relevant URL components
                                  will be derived automatically.
 ```
+
+### 新版的报警格式不喜欢，如何恢复为老版的 (v1.0.0 之前格式) ?
+
+一、准备好默认的文件, 参见 `contrib/templates/legacy/default.tmpl`
+
+二、编辑配置文件, 修改 `templates` 一节, 如下所示
+
+```yaml
+templates:
+  # Docker 的话可以直接这样写
+  - /etc/prometheus-webhook-dingtalk/templates/legacy/template.tmpl
+```

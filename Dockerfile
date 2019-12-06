@@ -8,10 +8,11 @@ ARG ARCH="amd64"
 ARG OS="linux"
 COPY .build/${OS}-${ARCH}/prometheus-webhook-dingtalk   /bin/prometheus-webhook-dingtalk
 COPY config.example.yml                                 /etc/prometheus-webhook-dingtalk/config.yml
-COPY template/default.tmpl                              /etc/prometheus-webhook-dingtalk/template/default.tmpl
+COPY contrib                                            /etc/prometheus-webhook-dingtalk/
+COPY template/default.tmpl                              /etc/prometheus-webhook-dingtalk/templates/default.tmpl
 
 RUN mkdir -p /prometheus-webhook-dingtalk && \
-    chown -R nobody:nogroup etc/prometheus-webhook-dingtalk /prometheus-webhook-dingtalk
+    chown -R nobody:nogroup /etc/prometheus-webhook-dingtalk /prometheus-webhook-dingtalk
 
 USER       nobody
 EXPOSE     8060
