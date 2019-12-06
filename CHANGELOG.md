@@ -1,9 +1,9 @@
-## 1.1.0
+## 1.1.0 / 2019-12-06
 
 - [ENHANCEMENT] Allow template customization for target individually. #58
 - [ENHANCEMENT] Change default template.
 
-## 1.0.0
+## 1.0.0 / 2019-12-05
 
 **BREAKING CHANGES**
 
