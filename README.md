@@ -41,10 +41,9 @@ Flags:
 ## Request timeout
 # timeout: 5s
 
-## Customizable template file path
-## In docker, by default the current working directory is set to /prometheus-webhook-dingtalk
-## However it's recommended to use absolute path whenever possible
-# template: template/default.tmpl
+## Customizable templates path
+templates:
+  - templates/cutomization.tmpl
 
 ## Targets, previously was known as "profiles"
 targets:
@@ -54,6 +53,13 @@ targets:
     secret: SEC000000000000000000000
   webhook2:
     url: https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxxxxx
+  webhook_legacy:
+    url: https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxxxxx
+    # Customize template content
+    message:
+      # Use legacy template
+      title: '{{ template "legacy.title" . }}'
+      text: '{{ template "legacy.text" . }}'
   webhook_mention_all:
     url: https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxxxxx
     mention:
