@@ -1,4 +1,4 @@
-## 1.1.0 / unreleased
+## 1.1.0
 
 - [ENHANCEMENT] Allow template customization for target individually. #58
 - [ENHANCEMENT] Change default template.
