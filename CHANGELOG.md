@@ -1,6 +1,6 @@
 ## 1.2.0 / unreleased
 
-- [ENHANCEMENT] Add support to configuration reload.
+- [ENHANCEMENT] Add support to configuration reload through SIGHUP signal. #60
 
 ## 1.1.0 / 2019-12-06
 
