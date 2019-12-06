@@ -58,7 +58,7 @@ func run() int {
 	}
 
 	// Parse templates
-	level.Info(logger).Log("msg", "loading templates", "templates", strings.Join(conf.Templates, ";"))
+	level.Info(logger).Log("msg", "Loading templates", "templates", strings.Join(conf.Templates, ";"))
 	tmpl, err := template.FromGlobs(conf.Templates...)
 	if err != nil {
 		level.Error(logger).Log("msg", "Failed to parse templates", "err", err)

@@ -10,8 +10,15 @@ import (
 )
 
 var (
-	DefaultConfig = Config{
+	defaultConfig = Config{
 		Timeout: 5 * time.Second,
+	}
+	defaultTarget = Target{
+		Message: defaultTargetMessage,
+	}
+	defaultTargetMessage = TargetMessage{
+		Title: `{{ template "ding.link.title" . }}`,
+		Text:  `{{ template "ding.link.content" . }}`,
 	}
 
 	targetValidNameRe = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9\-_]*$`)
@@ -25,9 +32,9 @@ func LoadFile(filename string) (*Config, error) {
 
 	cfg := &Config{}
 	// If the entire config body is empty the UnmarshalYAML method is
-	// never called. We thus have to set the DefaultConfig at the entry
+	// never called. We thus have to set the defaultConfig at the entry
 	// point as well.
-	*cfg = DefaultConfig
+	*cfg = defaultConfig
 	err = yaml.UnmarshalStrict(content, cfg)
 	if err != nil {
 		return nil, err
@@ -43,7 +50,7 @@ type Config struct {
 }
 
 func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	*c = DefaultConfig
+	*c = defaultConfig
 	// We want to set c to the defaults and then overwrite it with the input.
 	// To make unmarshal fill the plain data struct rather than calling UnmarshalYAML
 	// again, we have to hide it using a type indirection.
@@ -69,9 +76,41 @@ type Target struct {
 	URL     string         `yaml:"url"`
 	Secret  string         `yaml:"secret"`
 	Mention *TargetMention `yaml:"mention"`
+	Message TargetMessage  `yaml:"message"`
+}
+
+func (c *Target) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	*c = defaultTarget
+	// We want to set c to the defaults and then overwrite it with the input.
+	// To make unmarshal fill the plain data struct rather than calling UnmarshalYAML
+	// again, we have to hide it using a type indirection.
+	type plain Target
+	if err := unmarshal((*plain)(c)); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 type TargetMention struct {
 	All     bool     `yaml:"all"`
 	Mobiles []string `yaml:"mobiles"`
+}
+
+type TargetMessage struct {
+	Title string `yaml:"title"`
+	Text  string `yaml:"text"`
+}
+
+func (c *TargetMessage) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	*c = defaultTargetMessage
+	// We want to set c to the defaults and then overwrite it with the input.
+	// To make unmarshal fill the plain data struct rather than calling UnmarshalYAML
+	// again, we have to hide it using a type indirection.
+	type plain TargetMessage
+	if err := unmarshal((*plain)(c)); err != nil {
+		return err
+	}
+
+	return nil
 }

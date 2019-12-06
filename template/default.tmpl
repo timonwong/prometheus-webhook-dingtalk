@@ -9,10 +9,39 @@
 {{ range .Annotations.SortedPairs }}> - {{ .Name }}: {{ .Value | markdown | html }}
 {{ end }}
 **Source:** [{{ .GeneratorURL }}]({{ .GeneratorURL }})
-
 {{ end }}{{ end }}
 
-{{ define "ding.link.title" }}{{ template "__subject" . }}{{ end }}
-{{ define "ding.link.content" }}#### \[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}\] **[{{ index .GroupLabels "alertname" }}]({{ template "__alertmanagerURL" . }})**
+{{ define "default.__text_alert_list" }}{{ range . }}
+**Alert:** \[{{ .Labels.severity | upper }}\] {{ .Annotations.summary }}
+
+**Description:** {{ .Annotations.description }}
+
+**Graph:** [📈]({{ .GeneratorURL }})
+
+**Details:**
+{{ range .Labels.SortedPairs }}{{ if and (ne (.Name) "severity") (ne (.Name) "summary") }}> - {{ .Name }}: `{{ .Value | markdown | html }}`
+{{ end }}{{ end }}
+{{ end }}{{ end }}
+
+{{/* Default */}}
+{{ define "default.title" }}{{ template "__subject" . }}{{ end }}
+{{ define "default.content" }}#### \[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}\] **[{{ index .GroupLabels "alertname" }}]({{ template "__alertmanagerURL" . }})**
+{{ if gt (len .Alerts.Firing) 0 -}}
+### Alerts Firing
+{{ template "default.__text_alert_list" .Alerts.Firing }}
+{{- end }}
+{{ if gt (len .Alerts.Resolved) 0 -}}
+### Alerts Resolved
+{{ template "default.__text_alert_list" .Alerts.Resolved }}
+{{- end }}
+{{- end }}
+
+{{/* Legacy */}}
+{{ define "legacy.title" }}{{ template "__subject" . }}{{ end }}
+{{ define "legacy.content" }}#### \[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}\] **[{{ index .GroupLabels "alertname" }}]({{ template "__alertmanagerURL" . }})**
 {{ template "__text_alert_list" .Alerts.Firing }}
-{{ end }}
+{{- end }}
+
+{{/* Following names for compatibility */}}
+{{ define "ding.link.title" }}{{ template "default.title" . }}{{ end }}
+{{ define "ding.link.content" }}{{ template "default.content" . }}{{ end }}
