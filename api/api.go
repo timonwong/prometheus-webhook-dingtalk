@@ -1,4 +1,4 @@
-package webrouter
+package api
 
 import (
 	"bytes"
@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/go-chi/chi"
@@ -24,24 +25,43 @@ import (
 	"github.com/timonwong/prometheus-webhook-dingtalk/template"
 )
 
-type DingTalkResource struct {
-	Logger     log.Logger
-	Template   *template.Template
-	Targets    map[string]config.Target
-	HttpClient *http.Client
+type API struct {
+	// Protect against config, template and http client
+	mtx sync.RWMutex
+
+	tmpl       *template.Template
+	targets    map[string]config.Target
+	httpClient *http.Client
+
+	Logger log.Logger
 }
 
-func (rs *DingTalkResource) Routes() chi.Router {
+func (api *API) Update(conf *config.Config, tmpl *template.Template) {
+	api.mtx.Lock()
+	defer api.mtx.Unlock()
+
+	api.targets = conf.Targets
+	api.httpClient = &http.Client{
+		Transport: &http.Transport{
+			Proxy:             http.ProxyFromEnvironment,
+			DisableKeepAlives: true,
+		},
+	}
+	api.tmpl = tmpl
+}
+
+func (api *API) Routes() chi.Router {
 	r := chi.NewRouter()
 
-	r.Post("/{name}/send", rs.SendNotification)
+	r.Post("/{name}/send", api.SendNotification)
 	return r
 }
 
-func (rs *DingTalkResource) SendNotification(w http.ResponseWriter, r *http.Request) {
-	logger := rs.Logger
+func (api *API) SendNotification(w http.ResponseWriter, r *http.Request) {
+	logger := api.Logger
+	targets := api.getTargets()
 	targetName := chi.URLParam(r, "name")
-	target, ok := rs.Targets[targetName]
+	target, ok := targets[targetName]
 	if !ok {
 		level.Warn(logger).Log("msg", fmt.Sprintf("target %s not found", targetName))
 		http.NotFound(w, r)
@@ -61,37 +81,37 @@ func (rs *DingTalkResource) SendNotification(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	notification, err := rs.buildDingTalkNotification(&target, &promMessage)
+	notification, err := api.buildDingTalkNotification(&target, &promMessage)
 	if err != nil {
 		level.Error(logger).Log("msg", "Failed to build notification", "err", err)
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
 	}
 
-	if true {
-		robotResp, err := rs.sendDingTalkNotification(&target, notification)
-		if err != nil {
-			level.Error(logger).Log("msg", "Failed to send notification", "err", err)
-			http.Error(w, "Bad Request", http.StatusBadRequest)
-			return
-		}
+	robotResp, err := api.sendDingTalkNotification(&target, notification)
+	if err != nil {
+		level.Error(logger).Log("msg", "Failed to send notification", "err", err)
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
 
-		if robotResp.ErrorCode != 0 {
-			level.Error(logger).Log("msg", "Failed to send notification to DingTalk", "respCode", robotResp.ErrorCode, "respMsg", robotResp.ErrorMessage)
-			http.Error(w, "Unable to talk to DingTalk", http.StatusBadRequest)
-			return
-		}
+	if robotResp.ErrorCode != 0 {
+		level.Error(logger).Log("msg", "Failed to send notification to DingTalk", "respCode", robotResp.ErrorCode, "respMsg", robotResp.ErrorMessage)
+		http.Error(w, "Unable to talk to DingTalk", http.StatusBadRequest)
+		return
 	}
 
 	io.WriteString(w, "OK") // nolint: errcheck
 }
 
-func (rs *DingTalkResource) buildDingTalkNotification(target *config.Target, m *models.WebhookMessage) (*models.DingTalkNotification, error) {
-	title, err := rs.Template.ExecuteTextString(target.Message.Title, m)
+func (api *API) buildDingTalkNotification(target *config.Target, m *models.WebhookMessage) (*models.DingTalkNotification, error) {
+	tmpl := api.getTemplate()
+
+	title, err := tmpl.ExecuteTextString(target.Message.Title, m)
 	if err != nil {
 		return nil, err
 	}
-	content, err := rs.Template.ExecuteTextString(target.Message.Text, m)
+	content, err := tmpl.ExecuteTextString(target.Message.Text, m)
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +135,7 @@ func (rs *DingTalkResource) buildDingTalkNotification(target *config.Target, m *
 	return notification, nil
 }
 
-func (rs *DingTalkResource) sendDingTalkNotification(target *config.Target, notification *models.DingTalkNotification) (*models.DingTalkNotificationResponse, error) {
+func (api *API) sendDingTalkNotification(target *config.Target, notification *models.DingTalkNotification) (*models.DingTalkNotificationResponse, error) {
 	targetURL := target.URL
 	// Calculate signature when secret is provided
 	if target.Secret != "" {
@@ -150,7 +170,7 @@ func (rs *DingTalkResource) sendDingTalkNotification(target *config.Target, noti
 	}
 	httpReq.Header.Set("Content-Type", "application/json")
 
-	resp, err := rs.HttpClient.Do(httpReq)
+	resp, err := api.getHttpClient().Do(httpReq)
 	if err != nil {
 		return nil, errors.Wrap(err, "error sending notification to DingTalk")
 	}
@@ -170,4 +190,25 @@ func (rs *DingTalkResource) sendDingTalkNotification(target *config.Target, noti
 	}
 
 	return &robotResp, nil
+}
+
+func (api *API) getTemplate() *template.Template {
+	api.mtx.RLock()
+	defer api.mtx.RUnlock()
+
+	return api.tmpl
+}
+
+func (api *API) getTargets() map[string]config.Target {
+	api.mtx.RLock()
+	defer api.mtx.RUnlock()
+
+	return api.targets
+}
+
+func (api *API) getHttpClient() *http.Client {
+	api.mtx.RLock()
+	defer api.mtx.RUnlock()
+
+	return api.httpClient
 }

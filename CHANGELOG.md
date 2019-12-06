@@ -1,3 +1,7 @@
+## 1.2.0 / unreleased
+
+- [ENHANCEMENT] Add support to configuration reload.
+
 ## 1.1.0 / 2019-12-06
 
 - [ENHANCEMENT] Allow template customization for target individually. #58
