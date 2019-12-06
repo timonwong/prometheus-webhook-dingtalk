@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -19,7 +20,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/timonwong/prometheus-webhook-dingtalk/config"
-	"github.com/timonwong/prometheus-webhook-dingtalk/models"
+	"github.com/timonwong/prometheus-webhook-dingtalk/pkg/models"
 	"github.com/timonwong/prometheus-webhook-dingtalk/template"
 )
 
@@ -67,28 +68,30 @@ func (rs *DingTalkResource) SendNotification(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	robotResp, err := rs.sendDingTalkNotification(&target, notification)
-	if err != nil {
-		level.Error(logger).Log("msg", "Failed to send notification", "err", err)
-		http.Error(w, "Bad Request", http.StatusBadRequest)
-		return
-	}
+	if true {
+		robotResp, err := rs.sendDingTalkNotification(&target, notification)
+		if err != nil {
+			level.Error(logger).Log("msg", "Failed to send notification", "err", err)
+			http.Error(w, "Bad Request", http.StatusBadRequest)
+			return
+		}
 
-	if robotResp.ErrorCode != 0 {
-		level.Error(logger).Log("msg", "Failed to send notification to DingTalk", "respCode", robotResp.ErrorCode, "respMsg", robotResp.ErrorMessage)
-		http.Error(w, "Unable to talk to DingTalk", http.StatusBadRequest)
-		return
+		if robotResp.ErrorCode != 0 {
+			level.Error(logger).Log("msg", "Failed to send notification to DingTalk", "respCode", robotResp.ErrorCode, "respMsg", robotResp.ErrorMessage)
+			http.Error(w, "Unable to talk to DingTalk", http.StatusBadRequest)
+			return
+		}
 	}
 
 	io.WriteString(w, "OK") // nolint: errcheck
 }
 
 func (rs *DingTalkResource) buildDingTalkNotification(target *config.Target, m *models.WebhookMessage) (*models.DingTalkNotification, error) {
-	title, err := rs.Template.ExecuteTextString(`{{ template "ding.link.title" . }}`, m)
+	title, err := rs.Template.ExecuteTextString(target.Message.Title, m)
 	if err != nil {
 		return nil, err
 	}
-	content, err := rs.Template.ExecuteTextString(`{{ template "ding.link.content" . }}`, m)
+	content, err := rs.Template.ExecuteTextString(target.Message.Text, m)
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +154,10 @@ func (rs *DingTalkResource) sendDingTalkNotification(target *config.Target, noti
 	if err != nil {
 		return nil, errors.Wrap(err, "error sending notification to DingTalk")
 	}
-	defer resp.Body.Close()
+	defer func() {
+		io.Copy(ioutil.Discard, resp.Body)
+		resp.Body.Close()
+	}()
 
 	if resp.StatusCode != 200 {
 		return nil, errors.Errorf("unacceptable response code %d", resp.StatusCode)

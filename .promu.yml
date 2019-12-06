@@ -17,7 +17,7 @@ build:
 tarball:
   files:
     - LICENSE
-    - template/default.tmpl
+    - contrib
     - config.example.yml
 crossbuild:
   platforms:
