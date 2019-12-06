@@ -30,7 +30,7 @@ type Template struct {
 }
 
 // FromGlobs calls ParseGlob on all path globs provided and returns the
-// resulting Template.
+// resulting tmpl.
 func FromGlobs(paths ...string) (*Template, error) {
 	t := &Template{
 		tmpl: template.New("").Option("missingkey=zero"),
