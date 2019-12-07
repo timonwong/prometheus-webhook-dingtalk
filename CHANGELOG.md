@@ -1,10 +1,11 @@
 ## 1.2.0 / unreleased
 
 - [ENHANCEMENT] Add support to configuration reload through SIGHUP signal. #60
+- [ENHANCEMENT] Validate target incoming webhook url in case of typos. #61
 
 ## 1.1.0 / 2019-12-06
 
-- [ENHANCEMENT] Allow template customization for target individually. #58
+- [FEATURE] Allow template customization for target individually. #58
 - [ENHANCEMENT] Change default template.
 
 ## 1.0.0 / 2019-12-05
@@ -43,4 +44,4 @@ targets:
 
 - [ENHANCEMENT] Add various template functions from [sprig](http://masterminds.github.io/sprig/) #47
 - [ENHANCEMENT] Add signature support due to the new security enforcement requirement of dingtalk #49
-- [ENHANCEMENT] Add user mention support (all or specific mobiles) to dingtalk notification #54
+- [FEATURE] Add user mention support (all or specific mobiles) to dingtalk notification #54
