@@ -21,10 +21,10 @@ import (
 	"github.com/prometheus/common/version"
 	"gopkg.in/alecthomas/kingpin.v2"
 
-	"github.com/timonwong/prometheus-webhook-dingtalk/api"
 	"github.com/timonwong/prometheus-webhook-dingtalk/config"
 	"github.com/timonwong/prometheus-webhook-dingtalk/pkg/chilog"
 	"github.com/timonwong/prometheus-webhook-dingtalk/template"
+	"github.com/timonwong/prometheus-webhook-dingtalk/web/api"
 )
 
 func main() {
