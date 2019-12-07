@@ -15,7 +15,7 @@
                                  will be derived automatically.
 ```
 
-### 新版的报警格式不喜欢，如何恢复为老版的 (v1.0.0 之前格式) ?
+### 如何恢复为老版的样式 (v1.0.0 之前)
 
 一、准备好默认的文件, 参见 `contrib/templates/legacy/default.tmpl`
 

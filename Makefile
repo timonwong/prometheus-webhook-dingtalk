@@ -14,21 +14,54 @@
 # Needs to be defined before including Makefile.common to auto-generate targets
 DOCKER_ARCHS ?= amd64 armv7 arm64
 
+REACT_APP_PATH = web/ui/react-app
+REACT_APP_SOURCE_FILES = $(wildcard $(REACT_APP_PATH)/public/* $(REACT_APP_PATH)/src/* $(REACT_APP_PATH)/tsconfig.json)
+REACT_APP_OUTPUT_DIR = web/ui/static/react
+REACT_APP_NODE_MODULES_PATH = $(REACT_APP_PATH)/node_modules
+
 include Makefile.common
 
 DOCKER_IMAGE_NAME       ?= prometheus-webhook-dingtalk
 
 STATICCHECK_IGNORE =
 
-.PHONY: build-all
-build-all: assets build
+$(REACT_APP_NODE_MODULES_PATH): $(REACT_APP_PATH)/package.json $(REACT_APP_PATH)/yarn.lock
+	cd $(REACT_APP_PATH) && yarn --frozen-lockfile
+
+$(REACT_APP_OUTPUT_DIR): $(REACT_APP_NODE_MODULES_PATH) $(REACT_APP_SOURCE_FILES)
+	@echo ">> building React app"
+	@./scripts/build_react_app.sh
+
+.PHONY: build
+build: assets common-build
 
 .PHONY: assets
-assets: asset/assets_vfsdata.go
-
-asset/assets_vfsdata.go: template/default.tmpl
-	GO111MODULE=$(GO111MODULE) $(GO) generate $(GOOPTS) ./asset
+assets: $(REACT_APP_OUTPUT_DIR)
+	@echo ">> writing assets"
+	# Un-setting GOOS and GOARCH here because the generated Go code is always the same,
+	# but the cached object code is incompatible between architectures and OSes (which
+	# breaks cross-building for different combinations on CI in the same container).
+	GO111MODULE=$(GO111MODULE) GOOS= GOARCH=  $(GO) generate $(GOOPTS) ./asset
 	@$(GOFMT) -w ./asset
+
+.PHONY: react-app-lint
+react-app-lint:
+	@echo ">> running React app linting"
+	cd $(REACT_APP_PATH) && yarn lint:ci
+
+.PHONY: react-app-lint-fix
+react-app-lint-fix:
+	@echo ">> running React app linting and fixing errors where possibe"
+	cd $(REACT_APP_PATH) && yarn lint
+
+.PHONY: react-app-test
+react-app-test: | $(REACT_APP_NODE_MODULES_PATH) react-app-lint
+	@echo ">> running React app tests"
+	cd $(REACT_APP_PATH) && yarn test --no-watch --coverage
+
+.PHONY: test
+#test: common-test react-app-test
+test: common-test
 
 .PHONY: clean
 clean:

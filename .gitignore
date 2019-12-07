@@ -6,3 +6,5 @@
 coverage.txt
 /prometheus-webhook-dingtalk
 /config.yml
+
+/web/ui/static/react
