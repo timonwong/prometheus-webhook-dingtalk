@@ -19,6 +19,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/shurcooL/httpfs/filter"
 	"github.com/shurcooL/httpfs/union"
@@ -41,14 +42,30 @@ var Assets http.FileSystem = func() http.FileSystem {
 		assetsPrefix = "../"
 	}
 
-	var templates = filter.Keep(
+	templates := filter.Keep(
 		http.Dir(path.Join(assetsPrefix, "template")),
 		func(path string, fi os.FileInfo) bool {
 			return path == "/" || path == "/default.tmpl"
 		},
 	)
 
+	static := filter.Keep(
+		http.Dir(path.Join(assetsPrefix, "web/ui/static")),
+		func(path string, fi os.FileInfo) bool {
+			return fi.IsDir() || true
+		},
+	)
+
+	uiTemplates := filter.Keep(
+		http.Dir(path.Join(assetsPrefix, "web/ui/templates")),
+		func(path string, fi os.FileInfo) bool {
+			return fi.IsDir() || strings.HasSuffix(path, ".html")
+		},
+	)
+
 	return union.New(map[string]http.FileSystem{
-		"/templates": templates,
+		"/templates":    templates,
+		"/ui-templates": uiTemplates,
+		"/static":       static,
 	})
 }()

@@ -4,15 +4,11 @@ import (
 	"context"
 	"fmt"
 	"net"
-	"net/http"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
-	"time"
 
-	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"github.com/pkg/errors"
@@ -22,9 +18,8 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/timonwong/prometheus-webhook-dingtalk/config"
-	"github.com/timonwong/prometheus-webhook-dingtalk/pkg/chilog"
 	"github.com/timonwong/prometheus-webhook-dingtalk/template"
-	"github.com/timonwong/prometheus-webhook-dingtalk/web/api"
+	"github.com/timonwong/prometheus-webhook-dingtalk/web"
 )
 
 func main() {
@@ -53,10 +48,29 @@ func run() int {
 	level.Info(logger).Log("msg", "Starting prometheus-webhook-dingtalk", "version", version.Info())
 	level.Info(logger).Log("msg", "Build context", version.BuildContext())
 
-	var tmpl *template.Template
-	api := &api.API{
-		Logger: log.With(logger, "component", "api"),
+	flagsMap := map[string]string{}
+	// Exclude kingpin default flags to expose only Prometheus ones.
+	boilerplateFlags := kingpin.New("", "").Version("")
+	for _, f := range kingpin.CommandLine.Model().Flags {
+		if boilerplateFlags.GetFlag(f.Name) != nil {
+			continue
+		}
+
+		flagsMap[f.Name] = f.Value.String()
 	}
+
+	webHandler := web.New(log.With(logger, "component", "web"), &web.Options{
+		ListenAddress: *listenAddress,
+		Version: &web.VersionInfo{
+			Version:   version.Version,
+			Revision:  version.Revision,
+			Branch:    version.Branch,
+			BuildUser: version.BuildUser,
+			BuildDate: version.BuildDate,
+			GoVersion: version.GoVersion,
+		},
+		Flags: flagsMap,
+	})
 
 	configLogger := log.With(logger, "component", "configuration")
 	configCoordinator := config.NewCoordinator(
@@ -65,49 +79,41 @@ func run() int {
 	)
 	configCoordinator.Subscribe(func(conf *config.Config) error {
 		// Parse templates
-		var err error
-		level.Info(logger).Log("msg", "Loading templates", "templates", strings.Join(conf.Templates, ";"))
-		tmpl, err = template.FromGlobs(conf.Templates...)
+		level.Info(configLogger).Log("msg", "Loading templates", "templates", strings.Join(conf.Templates, ";"))
+		tmpl, err := template.FromGlobs(conf.Templates...)
 		if err != nil {
 			return errors.Wrap(err, "failed to parse templates")
 		}
 
 		// Print current targets configuration
-		if l := level.Info(logger); l != nil {
-			host, port, _ := net.SplitHostPort(*listenAddress)
-			if host == "" {
-				host = "localhost"
-			}
-
-			var paths []string
-			for name := range conf.Targets {
-				paths = append(paths, fmt.Sprintf("http://%s:%s/dingtalk/%s/send", host, port, name))
-			}
-			l.Log("msg", "Webhook urls for prometheus alertmanager", "urls", strings.Join(paths, " "))
+		host, port, _ := net.SplitHostPort(*listenAddress)
+		if host == "" {
+			host = "localhost"
 		}
 
-		api.Update(conf, tmpl)
-		return nil
+		var paths []string
+		for name := range conf.Targets {
+			paths = append(paths, fmt.Sprintf("http://%s:%s/dingtalk/%s/send", host, port, name))
+		}
+		configLogger.Log("msg", "Webhook urls for prometheus alertmanager", "urls", strings.Join(paths, " "))
+
+		return webHandler.ApplyConfig(conf, tmpl)
 	})
 
 	if err := configCoordinator.Reload(); err != nil {
 		return 1
 	}
 
-	r := chi.NewRouter()
-	r.Use(middleware.RealIP)
-	r.Use(middleware.RequestLogger(&chilog.KitLogger{Logger: logger}))
-	r.Use(middleware.Recoverer)
-	r.Mount("/dingtalk", api.Routes())
+	ctxWeb, cancelWeb := context.WithCancel(context.Background())
+	defer cancelWeb()
 
-	srv := http.Server{Addr: *listenAddress, Handler: r}
-	srvCh := make(chan struct{})
-
+	srvCh := make(chan error, 1)
 	go func() {
-		level.Info(logger).Log("msg", "Listening on address", "address", srv.Addr)
-		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+		defer close(srvCh)
+
+		if err := webHandler.Run(ctxWeb); err != nil {
 			level.Error(logger).Log("msg", "Error starting HTTP server", "err", err)
-			close(srvCh)
+			srvCh <- err
 		}
 	}()
 
@@ -123,13 +129,11 @@ func run() int {
 		<-hupReady
 		for {
 			select {
+			case <-ctxWeb.Done():
+				return
 			case <-hup:
 				// ignore error, already logged in `reload()`
 				_ = configCoordinator.Reload()
-			case <-term:
-				return
-			case <-srvCh:
-				return
 			}
 		}
 	}()
@@ -137,14 +141,17 @@ func run() int {
 	// Wait for reload or termination signals.
 	close(hupReady) // Unblock SIGHUP handler.
 
-	select {
-	case <-term:
-		level.Info(logger).Log("msg", "Received SIGTERM, exiting gracefully...")
-		ctx, cancelFn := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancelFn()
-		_ = srv.Shutdown(ctx)
-		return 0
-	case <-srvCh:
-		return 1
+	for {
+		select {
+		case <-term:
+			level.Info(logger).Log("msg", "Received SIGTERM, exiting gracefully...")
+			cancelWeb()
+		case err := <-srvCh:
+			if err != nil {
+				return 1
+			}
+
+			return 0
+		}
 	}
 }

@@ -1,4 +1,4 @@
-package api
+package dingtalk
 
 import (
 	"encoding/json"
@@ -7,10 +7,12 @@ import (
 	"sync"
 
 	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 
 	"github.com/timonwong/prometheus-webhook-dingtalk/config"
+	"github.com/timonwong/prometheus-webhook-dingtalk/pkg/chilog"
 	"github.com/timonwong/prometheus-webhook-dingtalk/pkg/models"
 	"github.com/timonwong/prometheus-webhook-dingtalk/template"
 )
@@ -22,8 +24,13 @@ type API struct {
 	tmpl       *template.Template
 	targets    map[string]config.Target
 	httpClient *http.Client
+	logger     log.Logger
+}
 
-	Logger log.Logger
+func NewAPI(logger log.Logger) *API {
+	return &API{
+		logger: logger,
+	}
 }
 
 func (api *API) Update(conf *config.Config, tmpl *template.Template) {
@@ -41,13 +48,15 @@ func (api *API) Update(conf *config.Config, tmpl *template.Template) {
 }
 
 func (api *API) Routes() chi.Router {
-	r := chi.NewRouter()
-
-	r.Post("/{name}/send", api.SendHandler)
-	return r
+	router := chi.NewRouter()
+	router.Use(middleware.RealIP)
+	router.Use(middleware.RequestLogger(&chilog.KitLogger{Logger: api.logger}))
+	router.Use(middleware.Recoverer)
+	router.Post("/{name}/send", api.send)
+	return router
 }
 
-func (api *API) SendHandler(w http.ResponseWriter, r *http.Request) {
+func (api *API) send(w http.ResponseWriter, r *http.Request) {
 	api.mtx.RLock()
 	targets := api.targets
 	tmpl := api.tmpl
@@ -55,7 +64,7 @@ func (api *API) SendHandler(w http.ResponseWriter, r *http.Request) {
 	api.mtx.RUnlock()
 
 	targetName := chi.URLParam(r, "name")
-	logger := log.With(api.Logger, "target", targetName)
+	logger := log.With(api.logger, "target", targetName)
 
 	target, ok := targets[targetName]
 	if !ok {

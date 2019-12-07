@@ -73,6 +73,14 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
+func (c Config) String() string {
+	b, err := yaml.Marshal(c)
+	if err != nil {
+		return fmt.Sprintf("<error creating config string: %s>", err)
+	}
+	return string(b)
+}
+
 type Target struct {
 	URL     *SecretURL     `yaml:"url"`
 	Secret  Secret         `yaml:"secret"`

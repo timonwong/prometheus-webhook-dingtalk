@@ -4,6 +4,13 @@ orbs:
   prometheus: prometheus/prometheus@0.3.0
   go: circleci/go@0.2.0
 
+executors:
+  # Whenever the Go version is updated here, .promu.yml
+  # should also be updated.
+  golang:
+    docker:
+      - image: circleci/golang:1.13-node
+
 commands:
   publish_images:
     description: >
@@ -109,19 +116,25 @@ commands:
 
 jobs:
   test:
-    # Whenever the Go version is updated here, .promu.yml should also be updated.
-    docker:
-      - image: circleci/golang:1.13
+    executor: golang
 
     steps:
       - prometheus/setup_environment
       - go/load-cache:
-        key: v1-go-mod
-      - run: make
-      - go/save-cache:
           key: v1-go-mod
+      - restore_cache:
+          keys:
+            - v1-npm-deps-{{ checksum "web/ui/react-app/yarn.lock" }}
+            - v1-npm-deps-
+      - run: make
       - prometheus/store_artifact:
           file: prometheus-webhook-dingtalk
+      - go/save-cache:
+          key: v1-go-mod
+      - save_cache:
+          key: v1-npm-deps-{{ checksum "web/ui/react-app/yarn.lock" }}
+          paths:
+            - web/ui/react-app/node_modules
   build:
     description: >
       Cross-build and store the binaries.
