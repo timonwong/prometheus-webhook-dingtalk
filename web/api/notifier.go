@@ -9,7 +9,6 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
-	"net/url"
 	"strconv"
 	"time"
 
@@ -50,26 +49,20 @@ func buildDingTalkNotification(tmpl *template.Template, target *config.Target, m
 }
 
 func sendDingTalkNotification(httpClient *http.Client, target *config.Target, notification *models.DingTalkNotification) (*models.DingTalkNotificationResponse, error) {
-	targetURL := target.URL
+	targetURL := target.URL.Copy()
 	// Calculate signature when secret is provided
 	if target.Secret != "" {
 		timestamp := strconv.FormatInt(time.Now().UnixNano()/int64(time.Millisecond), 10)
-		stringToSign := []byte(timestamp + "\n" + target.Secret)
+		stringToSign := []byte(timestamp + "\n" + string(target.Secret))
 
 		mac := hmac.New(sha256.New, []byte(target.Secret))
 		mac.Write(stringToSign) // nolint: errcheck
 		signature := base64.StdEncoding.EncodeToString(mac.Sum(nil))
 
-		u, err := url.Parse(targetURL)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to parse target url")
-		}
-
-		qs := u.Query()
+		qs := targetURL.Query()
 		qs.Set("timestamp", timestamp)
 		qs.Set("sign", signature)
-		u.RawQuery = qs.Encode()
-		targetURL = u.String()
+		targetURL.RawQuery = qs.Encode()
 	}
 
 	body, err := json.Marshal(&notification)
@@ -77,7 +70,7 @@ func sendDingTalkNotification(httpClient *http.Client, target *config.Target, no
 		return nil, errors.Wrap(err, "error encoding DingTalk request")
 	}
 
-	httpReq, err := http.NewRequest("POST", targetURL, bytes.NewReader(body))
+	httpReq, err := http.NewRequest("POST", targetURL.String(), bytes.NewReader(body))
 	if err != nil {
 		return nil, errors.Wrap(err, "error building DingTalk request")
 	}
