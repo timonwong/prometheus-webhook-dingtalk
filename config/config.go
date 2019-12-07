@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"regexp"
@@ -73,8 +74,8 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 type Target struct {
-	URL     string         `yaml:"url"`
-	Secret  string         `yaml:"secret"`
+	URL     *SecretURL     `yaml:"url"`
+	Secret  Secret         `yaml:"secret"`
 	Mention *TargetMention `yaml:"mention"`
 	Message TargetMessage  `yaml:"message"`
 }
@@ -87,6 +88,10 @@ func (c *Target) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	type plain Target
 	if err := unmarshal((*plain)(c)); err != nil {
 		return err
+	}
+
+	if c.URL == nil {
+		return errors.New("url cannot be empty")
 	}
 
 	return nil

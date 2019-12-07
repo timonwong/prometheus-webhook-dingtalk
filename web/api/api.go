@@ -64,12 +64,6 @@ func (api *API) SendHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if target.URL == "" {
-		level.Warn(logger).Log("msg", "target incoming webhook url is empty")
-		http.NotFound(w, r)
-		return
-	}
-
 	var promMessage models.WebhookMessage
 	if err := json.NewDecoder(r.Body).Decode(&promMessage); err != nil {
 		level.Error(logger).Log("msg", "Cannot decode prometheus webhook JSON request", "err", err)
