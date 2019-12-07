@@ -43,11 +43,11 @@ func (api *API) Update(conf *config.Config, tmpl *template.Template) {
 func (api *API) Routes() chi.Router {
 	r := chi.NewRouter()
 
-	r.Post("/{name}/send", api.SendNotification)
+	r.Post("/{name}/send", api.SendHandler)
 	return r
 }
 
-func (api *API) SendNotification(w http.ResponseWriter, r *http.Request) {
+func (api *API) SendHandler(w http.ResponseWriter, r *http.Request) {
 	api.mtx.RLock()
 	targets := api.targets
 	tmpl := api.tmpl

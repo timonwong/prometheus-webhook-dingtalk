@@ -18,19 +18,37 @@ package asset
 import (
 	"net/http"
 	"os"
+	"path"
 
 	"github.com/shurcooL/httpfs/filter"
 	"github.com/shurcooL/httpfs/union"
 )
 
-var templates http.FileSystem = filter.Keep(
-	http.Dir("../template"),
-	func(path string, fi os.FileInfo) bool {
-		return path == "/" || path == "/default.tmpl"
-	},
-)
-
 // Assets contains the project's assets.
-var Assets http.FileSystem = union.New(map[string]http.FileSystem{
-	"/templates": templates,
-})
+var Assets http.FileSystem = func() http.FileSystem {
+	wd, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+
+	var assetsPrefix string
+	switch path.Base(wd) {
+	case "prometheus-webhook-dingtalk":
+		// When running prometheus-webhook-dingtalk (without built-in assets) from the repo root.
+		assetsPrefix = "./"
+	case "asset":
+		// When generating statically compiled-in assets.
+		assetsPrefix = "../"
+	}
+
+	var templates = filter.Keep(
+		http.Dir(path.Join(assetsPrefix, "template")),
+		func(path string, fi os.FileInfo) bool {
+			return path == "/" || path == "/default.tmpl"
+		},
+	)
+
+	return union.New(map[string]http.FileSystem{
+		"/templates": templates,
+	})
+}()
