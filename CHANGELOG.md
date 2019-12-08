@@ -1,3 +1,7 @@
+## 1.2.1 / 2019-12-08
+
+- [FIX] Fix default template (which misleads users).
+
 ## 1.2.0 / 2019-12-08
 
 **NOTE** For security reason, the Web UI is disabled by default. In order to enable it, pass the `--web.ui-enabled` flag

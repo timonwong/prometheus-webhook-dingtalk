@@ -58,12 +58,13 @@ targets:
     message:
       # Use legacy template
       title: '{{ template "legacy.title" . }}'
-      text: '{{ template "legacy.text" . }}'
+      text: '{{ template "legacy.content" . }}'
   webhook_mention_all:
     url: https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxxxxx
     mention:
       all: true
   webhook_mention_users:
+    url: https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxxxxxx
     mention:
       mobiles: ['156xxxx8827', '189xxxx8325']
 ```
