@@ -12,6 +12,7 @@ import (
 	"github.com/go-kit/kit/log/level"
 
 	"github.com/timonwong/prometheus-webhook-dingtalk/config"
+	"github.com/timonwong/prometheus-webhook-dingtalk/notifier"
 	"github.com/timonwong/prometheus-webhook-dingtalk/pkg/chilog"
 	"github.com/timonwong/prometheus-webhook-dingtalk/pkg/models"
 	"github.com/timonwong/prometheus-webhook-dingtalk/template"
@@ -80,14 +81,14 @@ func (api *API) send(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	notification, err := buildDingTalkNotification(tmpl, &target, &promMessage)
+	notification, err := notifier.BuildNotification(tmpl, &target, &promMessage)
 	if err != nil {
 		level.Error(logger).Log("msg", "Failed to build notification", "err", err)
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
 	}
 
-	robotResp, err := sendDingTalkNotification(httpClient, &target, notification)
+	robotResp, err := notifier.SendNotification(httpClient, &target, notification)
 	if err != nil {
 		level.Error(logger).Log("msg", "Failed to send notification", "err", err)
 		http.Error(w, "Bad Request", http.StatusBadRequest)

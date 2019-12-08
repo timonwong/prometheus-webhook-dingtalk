@@ -1,5 +1,5 @@
-import React, {FC, useState} from 'react';
-import {Link} from '@reach/router';
+import React, { FC, useState } from 'react';
+import { Link } from '@reach/router';
 import {
   Collapse,
   DropdownItem,
@@ -8,7 +8,9 @@ import {
   Nav,
   Navbar,
   NavbarToggler,
-  UncontrolledDropdown
+  NavItem,
+  NavLink,
+  UncontrolledDropdown,
 } from 'reactstrap';
 
 const Navigation: FC = () => {
@@ -17,12 +19,17 @@ const Navigation: FC = () => {
 
   return (
     <Navbar className="mb-3" dark color="dark" expand="md" fixed="top">
-      <NavbarToggler onClick={toggle}/>
-      <Link className="pt-0 navbar-brand" to="/ui/config">
+      <NavbarToggler onClick={toggle} />
+      <Link className="pt-0 navbar-brand" to="/ui/playground">
         Prometheus Webhook Dingtalk
       </Link>
-      <Collapse isOpen={isOpen} navbar style={{justifyContent: 'space-between'}}>
+      <Collapse isOpen={isOpen} navbar style={{ justifyContent: 'space-between' }}>
         <Nav className="ml-0" navbar>
+          <NavItem>
+            <NavLink tag={Link} to="/ui/playground">
+              Playground
+            </NavLink>
+          </NavItem>
           <UncontrolledDropdown nav inNavbar>
             <DropdownToggle nav caret>
               Status
@@ -41,7 +48,8 @@ const Navigation: FC = () => {
           </UncontrolledDropdown>
         </Nav>
       </Collapse>
-    </Navbar>);
+    </Navbar>
+  );
 };
 
 export default Navigation;

@@ -1,5 +1,6 @@
 ## 1.2.0 / unreleased
 
+- [FEATURE] Add web UI for playground (preview & validate your templates, etc). #62, #63
 - [ENHANCEMENT] Add support to configuration reload through SIGHUP signal. #60
 - [ENHANCEMENT] Validate target incoming webhook url in case of typos. #61
 

@@ -11,13 +11,11 @@ import (
 )
 
 var (
-	defaultConfig = Config{
+	DefaultConfig = Config{
 		Timeout: 5 * time.Second,
 	}
-	defaultTarget = Target{
-		Message: defaultTargetMessage,
-	}
-	defaultTargetMessage = TargetMessage{
+	DefaultTarget        = Target{}
+	DefaultTargetMessage = TargetMessage{
 		Title: `{{ template "ding.link.title" . }}`,
 		Text:  `{{ template "ding.link.content" . }}`,
 	}
@@ -33,9 +31,9 @@ func LoadFile(filename string) (*Config, error) {
 
 	cfg := &Config{}
 	// If the entire config body is empty the UnmarshalYAML method is
-	// never called. We thus have to set the defaultConfig at the entry
+	// never called. We thus have to set the DefaultConfig at the entry
 	// point as well.
-	*cfg = defaultConfig
+	*cfg = DefaultConfig
 	err = yaml.UnmarshalStrict(content, cfg)
 	if err != nil {
 		return nil, err
@@ -44,14 +42,14 @@ func LoadFile(filename string) (*Config, error) {
 }
 
 type Config struct {
-	Template  string            `yaml:"template"`
-	Templates []string          `yaml:"templates"`
+	Template  string            `yaml:"template,omitempty"`
+	Templates []string          `yaml:"templates,omitempty"`
 	Timeout   time.Duration     `yaml:"timeout"`
 	Targets   map[string]Target `yaml:"targets"`
 }
 
 func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	*c = defaultConfig
+	*c = DefaultConfig
 	// We want to set c to the defaults and then overwrite it with the input.
 	// To make unmarshal fill the plain data struct rather than calling UnmarshalYAML
 	// again, we have to hide it using a type indirection.
@@ -82,14 +80,14 @@ func (c Config) String() string {
 }
 
 type Target struct {
-	URL     *SecretURL     `yaml:"url"`
-	Secret  Secret         `yaml:"secret"`
-	Mention *TargetMention `yaml:"mention"`
-	Message TargetMessage  `yaml:"message"`
+	URL     *SecretURL     `yaml:"url,omitempty"`
+	Secret  Secret         `yaml:"secret,omitempty"`
+	Mention *TargetMention `yaml:"mention,omitempty"`
+	Message *TargetMessage `yaml:"message,omitempty"`
 }
 
 func (c *Target) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	*c = defaultTarget
+	*c = DefaultTarget
 	// We want to set c to the defaults and then overwrite it with the input.
 	// To make unmarshal fill the plain data struct rather than calling UnmarshalYAML
 	// again, we have to hide it using a type indirection.
@@ -106,8 +104,8 @@ func (c *Target) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 type TargetMention struct {
-	All     bool     `yaml:"all"`
-	Mobiles []string `yaml:"mobiles"`
+	All     bool     `yaml:"all,omitempty"`
+	Mobiles []string `yaml:"mobiles,omitempty"`
 }
 
 type TargetMessage struct {
@@ -116,7 +114,7 @@ type TargetMessage struct {
 }
 
 func (c *TargetMessage) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	*c = defaultTargetMessage
+	*c = DefaultTargetMessage
 	// We want to set c to the defaults and then overwrite it with the input.
 	// To make unmarshal fill the plain data struct rather than calling UnmarshalYAML
 	// again, we have to hide it using a type indirection.

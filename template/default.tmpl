@@ -27,11 +27,11 @@
 {{ define "default.title" }}{{ template "__subject" . }}{{ end }}
 {{ define "default.content" }}#### \[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}\] **[{{ index .GroupLabels "alertname" }}]({{ template "__alertmanagerURL" . }})**
 {{ if gt (len .Alerts.Firing) 0 -}}
-### Alerts Firing
+**Alerts Firing**
 {{ template "default.__text_alert_list" .Alerts.Firing }}
 {{- end }}
 {{ if gt (len .Alerts.Resolved) 0 -}}
-### Alerts Resolved
+**Alerts Resolved**
 {{ template "default.__text_alert_list" .Alerts.Resolved }}
 {{- end }}
 {{- end }}

@@ -1,4 +1,4 @@
-package dingtalk
+package notifier
 
 import (
 	"bytes"
@@ -19,12 +19,21 @@ import (
 	"github.com/timonwong/prometheus-webhook-dingtalk/template"
 )
 
-func buildDingTalkNotification(tmpl *template.Template, target *config.Target, m *models.WebhookMessage) (*models.DingTalkNotification, error) {
-	title, err := tmpl.ExecuteTextString(target.Message.Title, m)
+func BuildNotification(tmpl *template.Template, target *config.Target, m *models.WebhookMessage) (*models.DingTalkNotification, error) {
+	var (
+		titleTpl   = config.DefaultTargetMessage.Title
+		contentTpl = config.DefaultTargetMessage.Text
+	)
+	if target.Message != nil {
+		titleTpl = target.Message.Title
+		contentTpl = target.Message.Text
+	}
+
+	title, err := tmpl.ExecuteTextString(titleTpl, m)
 	if err != nil {
 		return nil, err
 	}
-	content, err := tmpl.ExecuteTextString(target.Message.Text, m)
+	content, err := tmpl.ExecuteTextString(contentTpl, m)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +57,7 @@ func buildDingTalkNotification(tmpl *template.Template, target *config.Target, m
 	return notification, nil
 }
 
-func sendDingTalkNotification(httpClient *http.Client, target *config.Target, notification *models.DingTalkNotification) (*models.DingTalkNotificationResponse, error) {
+func SendNotification(httpClient *http.Client, target *config.Target, notification *models.DingTalkNotification) (*models.DingTalkNotificationResponse, error) {
 	targetURL := target.URL.Copy()
 	// Calculate signature when secret is provided
 	if target.Secret != "" {

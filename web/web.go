@@ -35,7 +35,7 @@ import (
 	"github.com/timonwong/prometheus-webhook-dingtalk/asset"
 	"github.com/timonwong/prometheus-webhook-dingtalk/config"
 	"github.com/timonwong/prometheus-webhook-dingtalk/template"
-	"github.com/timonwong/prometheus-webhook-dingtalk/web/api_v1"
+	"github.com/timonwong/prometheus-webhook-dingtalk/web/apiv1"
 	"github.com/timonwong/prometheus-webhook-dingtalk/web/dingtalk"
 )
 
@@ -43,6 +43,7 @@ var (
 	// Paths that are handled by the React / Reach router that should all be served the main React app's index.html.
 	reactRouterPaths = []string{
 		"/",
+		"/playground",
 		"/config",
 		"/flags",
 		"/status",
@@ -52,22 +53,24 @@ var (
 // Options for the web Handler.
 type Options struct {
 	ListenAddress string
+	EnableWebUI   bool
 	Version       *VersionInfo
 	Flags         map[string]string
 }
 
-type VersionInfo = api_v1.VersionInfo
+type VersionInfo = apiv1.VersionInfo
 
 type Handler struct {
 	mtx    sync.RWMutex
 	logger log.Logger
 
-	apiV1    *api_v1.API
+	apiV1    *apiv1.API
 	dingTalk *dingtalk.API
 
 	router      chi.Router
 	options     *Options
 	config      *config.Config
+	tmpl        *template.Template
 	versionInfo *VersionInfo
 	birth       time.Time
 	cwd         string
@@ -92,13 +95,17 @@ func New(logger log.Logger, o *Options) *Handler {
 		cwd:         cwd,
 	}
 
-	h.apiV1 = api_v1.NewAPI(
+	h.apiV1 = apiv1.NewAPI(
 		logger,
 		func() *config.Config {
 			h.mtx.RLock()
 			defer h.mtx.RUnlock()
-
 			return h.config
+		},
+		func() *template.Template {
+			h.mtx.RLock()
+			defer h.mtx.RUnlock()
+			return h.tmpl
 		},
 		o.Flags,
 		h.versionInfo,
@@ -110,47 +117,48 @@ func New(logger log.Logger, o *Options) *Handler {
 	h.router = router
 
 	fs := server.StaticFileServer(asset.Assets)
-	router.Get("/static/*", fs.ServeHTTP)
-	router.Get("/ui-templates/*", fs.ServeHTTP)
-	router.Mount("/api/v1", h.apiV1.Routes())
 	router.Mount("/dingtalk", h.dingTalk.Routes())
 
-	// Make sure that "/ui" is redirected to "/ui/" and
-	// not just the naked "/ui/"
-	router.Get("/ui", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "/ui/", http.StatusFound)
-	})
+	if o.EnableWebUI {
+		router.Mount("/api/v1", h.apiV1.Routes())
+		router.Get("/static/*", fs.ServeHTTP)
+		// Make sure that "/ui" is redirected to "/ui/" and
+		// not just the naked "/ui/"
+		router.Get("/ui", func(w http.ResponseWriter, r *http.Request) {
+			http.Redirect(w, r, "/ui/", http.StatusFound)
+		})
 
-	router.Get("/ui/*", func(w http.ResponseWriter, r *http.Request) {
-		p := strings.TrimPrefix(r.URL.Path, "/ui")
-		// For paths that the React/Reach router handles, we want to serve the
-		// index.html, but with replaced path prefix placeholder.
-		for _, rp := range reactRouterPaths {
-			if p != rp {
-				continue
-			}
+		router.Get("/ui/*", func(w http.ResponseWriter, r *http.Request) {
+			p := strings.TrimPrefix(r.URL.Path, "/ui")
+			// For paths that the React/Reach router handles, we want to serve the
+			// index.html, but with replaced path prefix placeholder.
+			for _, rp := range reactRouterPaths {
+				if p != rp {
+					continue
+				}
 
-			f, err := asset.Assets.Open("/static/react/index.html")
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				fmt.Fprintf(w, "Error opening React index.html: %v", err)
+				f, err := asset.Assets.Open("/static/react/index.html")
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+					fmt.Fprintf(w, "Error opening React index.html: %v", err)
+					return
+				}
+				idx, err := ioutil.ReadAll(f)
+				if err != nil {
+					w.WriteHeader(http.StatusInternalServerError)
+					fmt.Fprintf(w, "Error reading React index.html: %v", err)
+					return
+				}
+				w.Write(idx) // nolint: errcheck
 				return
 			}
-			idx, err := ioutil.ReadAll(f)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				fmt.Fprintf(w, "Error reading React index.html: %v", err)
-				return
-			}
-			w.Write(idx) // nolint: errcheck
-			return
-		}
 
-		// For all other paths, serve auxiliary assets.
-		r.URL.Path = path.Join("/static/react/", p)
-		fs := server.StaticFileServer(asset.Assets)
-		fs.ServeHTTP(w, r)
-	})
+			// For all other paths, serve auxiliary assets.
+			r.URL.Path = path.Join("/static/react/", p)
+			fs := server.StaticFileServer(asset.Assets)
+			fs.ServeHTTP(w, r)
+		})
+	}
 
 	return h
 }
@@ -161,6 +169,7 @@ func (h *Handler) ApplyConfig(conf *config.Config, tmpl *template.Template) erro
 	defer h.mtx.Unlock()
 
 	h.config = conf
+	h.tmpl = tmpl
 	h.dingTalk.Update(conf, tmpl)
 	return nil
 }
@@ -192,8 +201,8 @@ func (h *Handler) Run(ctx context.Context) error {
 	}
 }
 
-func (h *Handler) runtimeInfo() (*api_v1.RuntimeInfo, error) {
-	status := &api_v1.RuntimeInfo{
+func (h *Handler) runtimeInfo() (*apiv1.RuntimeInfo, error) {
+	status := &apiv1.RuntimeInfo{
 		StartTime:  h.birth,
 		CWD:        h.cwd,
 		GOMAXPROCS: runtime.GOMAXPROCS(0),

@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 export type APIResponse<T> = { status: string; data?: T };
 
 export interface FetchState<T> {
-  response: APIResponse<T>;
+  templateConfigResp: APIResponse<T>;
   error?: Error;
   isLoading: boolean;
 }
@@ -30,5 +30,5 @@ export const useFetch = <T extends {}>(url: string, options?: RequestInit): Fetc
     };
     fetchData();
   }, [url, options]);
-  return { response, error, isLoading };
+  return { templateConfigResp: response, error, isLoading };
 };
