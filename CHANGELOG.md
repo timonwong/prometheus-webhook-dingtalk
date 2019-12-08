@@ -1,3 +1,5 @@
+## 1.2.2 / unreleased
+
 ## 1.2.1 / 2019-12-08
 
 - [FIX] Fix default template (which misleads users).

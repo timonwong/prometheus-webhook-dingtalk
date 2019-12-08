@@ -164,7 +164,7 @@ func (api *API) serveRenderTemplate(r *http.Request) apiFuncResult {
 	var req struct {
 		Title         string `json:"title"`
 		Text          string `json:"text"`
-		DemoAlertJSOn string `json:"demoAlertJSOn"`
+		DemoAlertJSON string `json:"demoAlertJSON"`
 	}
 
 	err := json.NewDecoder(r.Body).Decode(&req)
@@ -173,7 +173,7 @@ func (api *API) serveRenderTemplate(r *http.Request) apiFuncResult {
 	}
 
 	var webhookMessage models.WebhookMessage
-	err = json.Unmarshal([]byte(req.DemoAlertJSOn), &webhookMessage)
+	err = json.Unmarshal([]byte(req.DemoAlertJSON), &webhookMessage)
 	if err != nil {
 		return apiFuncResult{nil, &apiError{errorBadData, err}}
 	}
@@ -187,7 +187,7 @@ func (api *API) serveRenderTemplate(r *http.Request) apiFuncResult {
 	}
 	notification, err := notifier.BuildNotification(api.tmpl(), target, &webhookMessage)
 	if err != nil {
-		return apiFuncResult{nil, &apiError{errorInternal, err}}
+		return apiFuncResult{nil, &apiError{errorBadData, err}}
 	}
 
 	resp := struct {

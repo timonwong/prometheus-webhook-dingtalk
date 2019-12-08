@@ -1,6 +1,7 @@
-import React, { FC, useRef, useState } from 'react';
+import React, { FC, useState } from 'react';
 import { RouteComponentProps } from '@reach/router';
 import {
+  Alert,
   Button,
   Col,
   Form,
@@ -16,7 +17,7 @@ import {
   TabContent,
   TabPane,
 } from 'reactstrap';
-import _ from 'lodash';
+import { useDebouncedCallback } from 'use-debounce';
 import ReactMarkdown from 'react-markdown';
 import { Light as SyntaxHighlighter } from 'react-syntax-highlighter';
 import markdown from 'react-syntax-highlighter/dist/esm/languages/hljs/markdown';
@@ -43,6 +44,8 @@ type APIRenderData = {
 
 interface APIRenderResponse {
   status: string;
+  error?: string;
+  errorType?: string;
   data?: APIRenderData;
 }
 
@@ -105,31 +108,14 @@ const demoAlertJSON = `{
     "version": "3"
 }`;
 
+const initialInputs = {
+  title: `{{ template "ding.link.title" . }}`,
+  text: `{{ template "ding.link.content" . }}`,
+  demoAlertJSON: demoAlertJSON,
+};
+
 const Playground: FC<RouteComponentProps> = () => {
-  const [leftActiveTab, setLeftActiveTab] = useState('1');
-  const [rightActiveTab, setRightActiveTab] = useState('1');
-  const [inputs, setInputs] = useState({
-    title: `{{ template "ding.link.title" . }}`,
-    text: `{{ template "ding.link.content" . }}`,
-    demoAlertJSON: demoAlertJSON,
-  });
-
-  const delayedRender = useRef(_.debounce(() => sendDelayedRender(), 1000)).current;
-  const [markdown, setMarkdown] = useState('');
-  const sendDelayedRender = async () => {
-    const res = await fetch('/api/v1/status/templates/render', {
-      method: 'POST',
-      body: JSON.stringify(inputs),
-    });
-    if (res.ok) {
-      const json = (await res.json()) as APIRenderResponse;
-      if (json.data) {
-        setMarkdown(json.data.markdown);
-      }
-    }
-  };
-
-  const { templateConfigResp } = useFetch<TemplatesConfig>('/api/v1/status/templates');
+  const { response: templateConfigResp } = useFetch<TemplatesConfig>('/api/v1/status/templates');
 
   let templateValue: string;
   let templates: TemplateConfig[] = [];
@@ -137,6 +123,46 @@ const Playground: FC<RouteComponentProps> = () => {
     templates = templateConfigResp.data.templates;
     templateValue = '0';
   }
+
+  const [leftActiveTab, setLeftActiveTab] = useState('1');
+  const [rightActiveTab, setRightActiveTab] = useState('1');
+  const [inputs, setInputs] = useState(initialInputs);
+
+  const startRenderMarkdown = async () => {
+    try {
+      const res = await fetch('/api/v1/status/templates/render', {
+        method: 'POST',
+        body: JSON.stringify(inputs),
+      });
+
+      const json = (await res.json()) as APIRenderResponse;
+      if (res.ok) {
+        setRenderError(false);
+
+        if (json.data) {
+          setMarkdown(json.data.markdown);
+        }
+      } else {
+        setRenderError(true);
+        console.log(`Error rendering template: ${json.error}`);
+      }
+    } catch (e) {
+      setRenderError(true);
+      console.log(`Unhandled error rendering template: ${e.toString()}`);
+    }
+  };
+
+  const [delayedRender] = useDebouncedCallback(() => {
+    startRenderMarkdown();
+  }, 500);
+
+  const [markdownInitialized, setMarkdownInitialized] = useState(false);
+  if (!markdownInitialized) {
+    setMarkdownInitialized(true);
+    startRenderMarkdown();
+  }
+  const [markdown, setMarkdown] = useState('');
+  const [renderError, setRenderError] = useState(false);
 
   const handleTemplateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     templateValue = event.target.value;
@@ -154,8 +180,6 @@ const Playground: FC<RouteComponentProps> = () => {
       setInputs(newState);
     }
   };
-
-  sendDelayedRender();
 
   const templateLoaderComponent = (
     <InputGroup>
@@ -183,7 +207,11 @@ const Playground: FC<RouteComponentProps> = () => {
             <FormGroup>{templateLoaderComponent}</FormGroup>
           </Form>
         </Col>
-        <Col />
+        <Col>
+          <Alert color="danger" hidden={!renderError}>
+            Unable to render template, check the console for details.
+          </Alert>
+        </Col>
       </Row>
       <Row>
         <Col>
