@@ -114,7 +114,7 @@ const Playground: FC<RouteComponentProps> = () => {
     demoAlertJSON: demoAlertJSON,
   });
 
-  const delayedRender = useRef(_.debounce(() => sendDelayedRender(), 500)).current;
+  const delayedRender = useRef(_.debounce(() => sendDelayedRender(), 1000)).current;
   const [markdown, setMarkdown] = useState('');
   const sendDelayedRender = async () => {
     const res = await fetch('/api/v1/status/templates/render', {

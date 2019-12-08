@@ -1,5 +1,8 @@
 ## 1.2.0 / unreleased
 
+**NOTE** For security reason, the Web UI is disabled by default. In order to enable it, pass the `--web.ui-enabled` flag
+when program starts.
+
 - [FEATURE] Add web UI for playground (preview & validate your templates, etc). #62, #63
 - [ENHANCEMENT] Add support to configuration reload through SIGHUP signal. #60
 - [ENHANCEMENT] Validate target incoming webhook url in case of typos. #61

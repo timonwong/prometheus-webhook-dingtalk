@@ -25,6 +25,7 @@ Flags:
   -h, --help               Show context-sensitive help (also try --help-long and --help-man).
       --web.listen-address=:8060
                            The address to listen on for web interface.
+      --web.ui-enabled          Enable Web UI mounted on /ui path
       --config.file=config.yml
                            Path to the configuration file.
       --log.level=info     Only log messages with the given severity or above. One of: [debug, info, warn, error]

@@ -191,7 +191,7 @@ func (api *API) serveRenderTemplate(r *http.Request) apiFuncResult {
 	}
 
 	resp := struct {
-		Markdown string `json:"markdown,omitempty"`
+		Markdown string `json:"markdown"`
 	}{
 		Markdown: notification.Markdown.Text,
 	}
