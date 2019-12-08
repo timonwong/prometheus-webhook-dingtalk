@@ -43,6 +43,7 @@ var (
 	// Paths that are handled by the React / Reach router that should all be served the main React app's index.html.
 	reactRouterPaths = []string{
 		"/",
+		"/playground",
 		"/config",
 		"/flags",
 		"/status",
