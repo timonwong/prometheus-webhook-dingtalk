@@ -75,8 +75,8 @@ const Status: FC<RouteComponentProps> = () => {
   const runtime = useFetch<StatusPageState>(`${path}/status/buildinfo`);
 
   let data;
-  if (status.templateConfigResp.data && runtime.templateConfigResp.data) {
-    data = [status.templateConfigResp.data, runtime.templateConfigResp.data];
+  if (status.response.data && runtime.response.data) {
+    data = [status.response.data, runtime.response.data];
   }
 
   return (

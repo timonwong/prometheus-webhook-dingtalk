@@ -16,6 +16,7 @@ RUN mkdir -p /prometheus-webhook-dingtalk && \
 
 USER       nobody
 EXPOSE     8060
+VOLUME     [ "/prometheus-webhook-dingtalk" ]
 WORKDIR    /prometheus-webhook-dingtalk
 ENTRYPOINT [ "/bin/prometheus-webhook-dingtalk" ]
 CMD        [ "--config.file=/etc/prometheus-webhook-dingtalk/config.yml" ]

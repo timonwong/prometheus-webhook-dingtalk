@@ -44,6 +44,7 @@ func run() int {
 
 	promlogConfig := &promlog.Config{}
 	flag.AddFlags(kingpin.CommandLine, promlogConfig)
+
 	kingpin.Version(version.Print("prometheus-webhook-dingtalk"))
 	kingpin.HelpFlag.Short('h')
 	kingpin.Parse()
