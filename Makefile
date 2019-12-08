@@ -66,3 +66,4 @@ test: common-test
 .PHONY: clean
 clean:
 	- @rm -rf asset/assets_vfsdata.go
+	- @rm -rf "$(REACT_APP_OUTPUT_DIR)"s

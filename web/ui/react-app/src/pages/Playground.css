@@ -1,0 +1,83 @@
+.form-label {
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.preview-nav {
+  padding-top: 0;
+  padding-bottom: 0.5em;
+}
+
+textarea.text-monospace {
+  font-size: 14px;
+}
+
+textarea.form-control {
+  min-height: 60px;
+}
+
+.preview {
+  height: 500px;
+  overflow-y: auto;
+  border: 1px solid #ced4da;
+  border-radius: .25rem;
+  background: #fafafa;
+}
+
+.preview-markdown pre {
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.preview-content-area {
+  margin-top: 0.5em;
+  margin-left: 0.5em;
+}
+
+.preview-content-area .message-bubble {
+  min-height: 21px;
+  float: left;
+  clear: both;
+  padding: 5px 11px;
+  border: 1px solid #e1e0e4;
+  border-radius: 6px;
+  background-color: #fff;
+  line-height: 1.5;
+  max-width: 300px;
+  overflow: hidden;
+  transition: background-color .25s ease;
+}
+
+.message-bubble {
+  font-size: 14px;
+}
+
+.message-bubble .link,
+.message-bubble a {
+  text-decoration: none;
+  color: #38adff;
+}
+
+.message-bubble .link:hover,
+.message-bubble a:hover {
+  text-decoration: none !important;
+  color: #60bdff;
+}
+
+.message-bubble h1,
+.message-bubble h2,
+.message-bubble h3,
+.message-bubble h4,
+.message-bubble h5,
+.message-bubble h6 {
+  font: inherit;
+  font-size: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.markdown-content p {
+  color: #666;
+  margin: 0;
+  padding: 0;
+}

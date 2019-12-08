@@ -1,7 +1,7 @@
-import React, {ComponentType, FC} from 'react';
-import {Alert} from 'reactstrap';
-import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
-import {faSpinner} from '@fortawesome/free-solid-svg-icons';
+import React, { ComponentType, FC } from 'react';
+import { Alert } from 'reactstrap';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 interface StatusIndicatorProps {
   error?: Error;
@@ -9,13 +9,12 @@ interface StatusIndicatorProps {
   customErrorMsg?: JSX.Element;
 }
 
-export const withStatusIndicator = <T extends {}>(Component: ComponentType<T>): FC<StatusIndicatorProps & T> => (
-  {
-    error,
-    isLoading,
-    customErrorMsg,
-    ...rest
-  }) => {
+export const withStatusIndicator = <T extends {}>(Component: ComponentType<T>): FC<StatusIndicatorProps & T> => ({
+  error,
+  isLoading,
+  customErrorMsg,
+  ...rest
+}) => {
   if (error) {
     return (
       <Alert color="danger">
@@ -37,7 +36,7 @@ export const withStatusIndicator = <T extends {}>(Component: ComponentType<T>): 
         icon={faSpinner}
         spin
         className="position-absolute"
-        style={{transform: 'translate(-50%, -50%)', top: '50%', left: '50%'}}
+        style={{ transform: 'translate(-50%, -50%)', top: '50%', left: '50%' }}
       />
     );
   }

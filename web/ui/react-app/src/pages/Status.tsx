@@ -1,8 +1,8 @@
-import React, {FC, Fragment} from 'react';
-import {RouteComponentProps} from '@reach/router';
-import {Table} from 'reactstrap';
-import {withStatusIndicator} from '../withStatusIndicator';
-import {useFetch} from '../utils/useFetch';
+import React, { FC, Fragment } from 'react';
+import { RouteComponentProps } from '@reach/router';
+import { Table } from 'reactstrap';
+import { withStatusIndicator } from '../withStatusIndicator';
+import { useFetch } from '../utils/useFetch';
 
 const sectionTitles = ['Runtime Information', 'Build Information'];
 
@@ -17,21 +17,21 @@ interface StatusPageProps {
 }
 
 export const statusConfig: StatusConfig = {
-  startTime: {title: 'Start time', customizeValue: (v: string) => new Date(v).toUTCString()},
-  CWD: {title: 'Working directory'},
+  startTime: { title: 'Start time', customizeValue: (v: string) => new Date(v).toUTCString() },
+  CWD: { title: 'Working directory' },
   reloadConfigSuccess: {
     title: 'Configuration reload',
     customizeValue: (v: boolean) => (v ? 'Successful' : 'Unsuccessful'),
   },
-  lastConfigTime: {title: 'Last successful configuration reload'},
-  chunkCount: {title: 'Head chunks'},
-  timeSeriesCount: {title: 'Head time series'},
-  corruptionCount: {title: 'WAL corruptions'},
-  goroutineCount: {title: 'Goroutines'},
-  storageRetention: {title: 'Storage retention'},
+  lastConfigTime: { title: 'Last successful configuration reload' },
+  chunkCount: { title: 'Head chunks' },
+  timeSeriesCount: { title: 'Head time series' },
+  corruptionCount: { title: 'WAL corruptions' },
+  goroutineCount: { title: 'Goroutines' },
+  storageRetention: { title: 'Storage retention' },
 };
 
-export const StatusContent: FC<StatusPageProps> = ({data = []}) => {
+export const StatusContent: FC<StatusPageProps> = ({ data = [] }) => {
   return (
     <>
       {data.map((statuses, i) => {
@@ -40,23 +40,23 @@ export const StatusContent: FC<StatusPageProps> = ({data = []}) => {
             <h2>{sectionTitles[i]}</h2>
             <Table className="h-auto" size="sm" bordered striped>
               <tbody>
-              {Object.entries(statuses).map(([k, v], i) => {
-                const {title = k, customizeValue = (val: any) => val, customRow, skip} = statusConfig[k] || {};
-                if (skip) {
-                  return null;
-                }
-                if (customRow) {
-                  return customizeValue(v, k);
-                }
-                return (
-                  <tr key={k}>
-                    <th className="capitalize-title" style={{width: '35%'}}>
-                      {title}
-                    </th>
-                    <td className="text-break">{customizeValue(v, title)}</td>
-                  </tr>
-                );
-              })}
+                {Object.entries(statuses).map(([k, v], i) => {
+                  const { title = k, customizeValue = (val: any) => val, customRow, skip } = statusConfig[k] || {};
+                  if (skip) {
+                    return null;
+                  }
+                  if (customRow) {
+                    return customizeValue(v, k);
+                  }
+                  return (
+                    <tr key={k}>
+                      <th className="capitalize-title" style={{ width: '35%' }}>
+                        {title}
+                      </th>
+                      <td className="text-break">{customizeValue(v, title)}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </Table>
           </Fragment>
@@ -75,8 +75,8 @@ const Status: FC<RouteComponentProps> = () => {
   const runtime = useFetch<StatusPageState>(`${path}/status/buildinfo`);
 
   let data;
-  if (status.response.data && runtime.response.data) {
-    data = [status.response.data, runtime.response.data];
+  if (status.templateConfigResp.data && runtime.templateConfigResp.data) {
+    data = [status.templateConfigResp.data, runtime.templateConfigResp.data];
   }
 
   return (

@@ -15,14 +15,39 @@
     "@types/react": "^16.9.0",
     "@types/react-dom": "^16.9.0",
     "bootstrap": "^4.4.1",
+    "classnames": "^2.2.6",
     "http-proxy-middleware": "^0.20.0",
+    "lodash": "^4.17.15",
     "react": "^16.12.0",
     "react-copy-to-clipboard": "^5.0.2",
     "react-dom": "^16.12.0",
+    "react-markdown": "^4.2.2",
     "react-scripts": "3.3.0",
+    "react-syntax-highlighter": "^11.0.2",
     "reactstrap": "^8.2.0",
     "serialize-javascript": "^2.1.1",
     "typescript": "~3.7.2"
+  },
+  "devDependencies": {
+    "@types/classnames": "^2.2.9",
+    "@types/lodash": "^4.14.149",
+    "@types/reach__router": "^1.2.6",
+    "@types/react-copy-to-clipboard": "^4.3.0",
+    "@types/react-syntax-highlighter": "^11.0.3",
+    "@types/reactstrap": "^8.2.0",
+    "@typescript-eslint/eslint-plugin": "2.x",
+    "@typescript-eslint/parser": "2.x",
+    "babel-eslint": "^10.0.3",
+    "eslint": "^6.7.2",
+    "eslint-config-prettier": "^6.7.0",
+    "eslint-config-react-app": "^5.1.0",
+    "eslint-plugin-flowtype": "3.x",
+    "eslint-plugin-import": "^2.18.2",
+    "eslint-plugin-jsx-a11y": "^6.2.3",
+    "eslint-plugin-prettier": "^3.1.1",
+    "eslint-plugin-react": "^7.17.0",
+    "eslint-plugin-react-hooks": "1.x",
+    "prettier": "^1.19.1"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -32,6 +57,11 @@
     "eject": "react-scripts eject",
     "lint:ci": "eslint --quiet \"src/**/*.{ts,tsx}\"",
     "lint": "eslint --fix \"src/**/*.{ts,tsx}\""
+  },
+  "prettier": {
+    "singleQuote": true,
+    "trailingComma": "es5",
+    "printWidth": 125
   },
   "eslintConfig": {
     "extends": "react-app"
@@ -48,9 +78,5 @@
       "last 1 safari version"
     ]
   },
-  "devDependencies": {
-    "@types/reach__router": "^1.2.6",
-    "@types/react-copy-to-clipboard": "^4.3.0",
-    "@types/reactstrap": "^8.2.0"
-  }
+  "proxy": "http://localhost:8060"
 }

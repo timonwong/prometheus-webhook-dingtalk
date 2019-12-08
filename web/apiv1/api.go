@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package api_v1
+package apiv1
 
 import (
 	"encoding/json"
@@ -24,11 +24,15 @@ import (
 	"github.com/go-kit/kit/log/level"
 
 	"github.com/timonwong/prometheus-webhook-dingtalk/config"
+	"github.com/timonwong/prometheus-webhook-dingtalk/notifier"
+	"github.com/timonwong/prometheus-webhook-dingtalk/pkg/models"
+	"github.com/timonwong/prometheus-webhook-dingtalk/template"
 )
 
 type API struct {
 	logger      log.Logger
 	config      func() *config.Config
+	tmpl        func() *template.Template
 	flagsMap    map[string]string
 	versionInfo *VersionInfo
 	runtimeInfo func() (*RuntimeInfo, error)
@@ -36,6 +40,7 @@ type API struct {
 
 func NewAPI(logger log.Logger,
 	config func() *config.Config,
+	tmpl func() *template.Template,
 	flagsMap map[string]string,
 	versionInfo *VersionInfo,
 	runtimeInfo func() (*RuntimeInfo, error)) *API {
@@ -43,6 +48,7 @@ func NewAPI(logger log.Logger,
 	return &API{
 		logger:      logger,
 		config:      config,
+		tmpl:        tmpl,
 		flagsMap:    flagsMap,
 		versionInfo: versionInfo,
 		runtimeInfo: runtimeInfo,
@@ -60,14 +66,13 @@ func (api *API) Routes() chi.Router {
 			} else {
 				w.WriteHeader(http.StatusNoContent)
 			}
-			if result.finalizer != nil {
-				result.finalizer()
-			}
 		})
 		return hf
 	}
 
 	router := chi.NewRouter()
+	router.Get("/status/templates", wrap(api.serveTemplates))
+	router.Post("/status/templates/render", wrap(api.serveRenderTemplate))
 	router.Get("/status/config", wrap(api.serveConfig))
 	router.Get("/status/runtimeinfo", wrap(api.serveRuntimeInfo))
 	router.Get("/status/buildinfo", wrap(api.serveBuildInfo))
@@ -110,12 +115,88 @@ type response struct {
 }
 
 type apiFuncResult struct {
-	data      interface{}
-	err       *apiError
-	finalizer func()
+	data interface{}
+	err  *apiError
 }
 
 type apiFunc func(r *http.Request) apiFuncResult
+
+func (api *API) serveTemplates(r *http.Request) apiFuncResult {
+	type templateInfo struct {
+		Target string `json:"name"`
+		Title  string `json:"title"`
+		Text   string `json:"text"`
+	}
+
+	type templatesInfo struct {
+		Templates []templateInfo `json:"templates"`
+	}
+
+	conf := api.config()
+	templates := []templateInfo{
+		{
+			Target: "<default>",
+			Title:  config.DefaultTargetMessage.Title,
+			Text:   config.DefaultTargetMessage.Text,
+		},
+	}
+	for name, target := range conf.Targets {
+		if target.Message == nil {
+			templates = append(templates, templateInfo{
+				Target: name,
+				Title:  config.DefaultTargetMessage.Title,
+				Text:   config.DefaultTargetMessage.Text,
+			})
+		} else {
+			templates = append(templates, templateInfo{
+				Target: name,
+				Title:  target.Message.Title,
+				Text:   target.Message.Text,
+			})
+		}
+	}
+
+	info := &templatesInfo{Templates: templates}
+	return apiFuncResult{info, nil}
+}
+
+func (api *API) serveRenderTemplate(r *http.Request) apiFuncResult {
+	var req struct {
+		Title         string `json:"title"`
+		Text          string `json:"text"`
+		DemoAlertJSOn string `json:"demoAlertJSOn"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		return apiFuncResult{nil, &apiError{errorBadData, err}}
+	}
+
+	var webhookMessage models.WebhookMessage
+	err = json.Unmarshal([]byte(req.DemoAlertJSOn), &webhookMessage)
+	if err != nil {
+		return apiFuncResult{nil, &apiError{errorBadData, err}}
+	}
+
+	// Construct a fake "target"
+	target := &config.Target{
+		Message: &config.TargetMessage{
+			Title: req.Title,
+			Text:  req.Text,
+		},
+	}
+	notification, err := notifier.BuildNotification(api.tmpl(), target, &webhookMessage)
+	if err != nil {
+		return apiFuncResult{nil, &apiError{errorInternal, err}}
+	}
+
+	resp := struct {
+		Markdown string `json:"markdown,omitempty"`
+	}{
+		Markdown: notification.Markdown.Text,
+	}
+	return apiFuncResult{&resp, nil}
+}
 
 func (api *API) serveConfig(r *http.Request) apiFuncResult {
 	cfg := &struct {
@@ -123,7 +204,7 @@ func (api *API) serveConfig(r *http.Request) apiFuncResult {
 	}{
 		YAML: api.config().String(),
 	}
-	return apiFuncResult{cfg, nil, nil}
+	return apiFuncResult{cfg, nil}
 }
 
 type RuntimeInfo struct {
@@ -139,10 +220,10 @@ type RuntimeInfo struct {
 func (api *API) serveRuntimeInfo(r *http.Request) apiFuncResult {
 	status, err := api.runtimeInfo()
 	if err != nil {
-		return apiFuncResult{status, &apiError{errorInternal, err}, nil}
+		return apiFuncResult{status, &apiError{errorInternal, err}}
 	}
 
-	return apiFuncResult{status, nil, nil}
+	return apiFuncResult{status, nil}
 }
 
 type VersionInfo struct {
@@ -155,11 +236,11 @@ type VersionInfo struct {
 }
 
 func (api *API) serveBuildInfo(r *http.Request) apiFuncResult {
-	return apiFuncResult{api.versionInfo, nil, nil}
+	return apiFuncResult{api.versionInfo, nil}
 }
 
 func (api *API) serveFlags(r *http.Request) apiFuncResult {
-	return apiFuncResult{api.flagsMap, nil, nil}
+	return apiFuncResult{api.flagsMap, nil}
 }
 
 func (api *API) respond(w http.ResponseWriter, data interface{}) {

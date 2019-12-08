@@ -14,7 +14,6 @@
 package models
 
 import (
-	"encoding/json"
 	"sort"
 	"time"
 
@@ -151,10 +150,4 @@ func (as Alerts) Resolved() []Alert {
 	return res
 }
 
-type WebhookMessage struct {
-	*Data
-
-	// The protocol version.
-	Version  string           `json:"version"`
-	GroupKey *json.RawMessage `json:"groupKey"`
-}
+type WebhookMessage Data

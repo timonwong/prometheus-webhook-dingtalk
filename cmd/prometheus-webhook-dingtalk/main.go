@@ -32,6 +32,10 @@ func run() int {
 			"web.listen-address",
 			"The address to listen on for web interface.",
 		).Default(":8060").String()
+		enableWebUI = kingpin.Flag(
+			"web.ui-enabled",
+			"Enable Web UI mounted on /ui path",
+		).Default("false").Bool()
 		configFile = kingpin.Flag(
 			"config.file",
 			"Path to the configuration file.",
@@ -61,6 +65,7 @@ func run() int {
 
 	webHandler := web.New(log.With(logger, "component", "web"), &web.Options{
 		ListenAddress: *listenAddress,
+		EnableWebUI:   *enableWebUI,
 		Version: &web.VersionInfo{
 			Version:   version.Version,
 			Revision:  version.Revision,
