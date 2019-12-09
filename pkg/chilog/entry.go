@@ -16,7 +16,7 @@ func (l *KitLogEntry) Write(status, bytes int, elapsed time.Duration) {
 	logger := log.With(l.Logger,
 		"resp_status", status,
 		"resp_bytes_length", bytes,
-		"resp_elasped_ms", float64(elapsed.Nanoseconds())/1000000.0,
+		"resp_elapsed_ms", float64(elapsed.Nanoseconds())/1000000.0,
 	)
 
 	level.Info(logger).Log("msg", "request complete")
