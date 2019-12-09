@@ -11,12 +11,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package asset provides the assets via a virtual filesystem.
-package asset
+package template
 
 import (
-	// The blank import is to make go modules happy.
+	// The blank import is to make Go modules happy.
+	_ "github.com/shurcooL/httpfs/filter"
+	_ "github.com/shurcooL/httpfs/union"
 	_ "github.com/shurcooL/vfsgen"
 )
 
-//go:generate go run -tags=dev asset_generate.go
+//go:generate go run -mod=vendor assets_generate.go

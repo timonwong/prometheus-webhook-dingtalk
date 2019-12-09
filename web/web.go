@@ -32,11 +32,11 @@ import (
 	"github.com/go-kit/kit/log/level"
 	"github.com/prometheus/common/server"
 
-	"github.com/timonwong/prometheus-webhook-dingtalk/asset"
 	"github.com/timonwong/prometheus-webhook-dingtalk/config"
 	"github.com/timonwong/prometheus-webhook-dingtalk/template"
 	"github.com/timonwong/prometheus-webhook-dingtalk/web/apiv1"
 	"github.com/timonwong/prometheus-webhook-dingtalk/web/dingtalk"
+	"github.com/timonwong/prometheus-webhook-dingtalk/web/ui"
 )
 
 var (
@@ -116,7 +116,7 @@ func New(logger log.Logger, o *Options) *Handler {
 	router := chi.NewRouter()
 	h.router = router
 
-	fs := server.StaticFileServer(asset.Assets)
+	fs := server.StaticFileServer(ui.Assets)
 	router.Mount("/dingtalk", h.dingTalk.Routes())
 
 	if o.EnableWebUI {
@@ -137,7 +137,7 @@ func New(logger log.Logger, o *Options) *Handler {
 					continue
 				}
 
-				f, err := asset.Assets.Open("/static/react/index.html")
+				f, err := ui.Assets.Open("/static/react/index.html")
 				if err != nil {
 					w.WriteHeader(http.StatusInternalServerError)
 					fmt.Fprintf(w, "Error opening React index.html: %v", err)
@@ -155,7 +155,7 @@ func New(logger log.Logger, o *Options) *Handler {
 
 			// For all other paths, serve auxiliary assets.
 			r.URL.Path = path.Join("/static/react/", p)
-			fs := server.StaticFileServer(asset.Assets)
+			fs := server.StaticFileServer(ui.Assets)
 			fs.ServeHTTP(w, r)
 		})
 	}

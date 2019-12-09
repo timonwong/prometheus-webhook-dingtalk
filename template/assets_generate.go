@@ -21,15 +21,15 @@ import (
 
 	"github.com/shurcooL/vfsgen"
 
-	"github.com/timonwong/prometheus-webhook-dingtalk/asset"
 	"github.com/timonwong/prometheus-webhook-dingtalk/pkg/modtimevfs"
+	"github.com/timonwong/prometheus-webhook-dingtalk/template"
 )
 
 func main() {
-	fs := modtimevfs.New(asset.Assets, time.Unix(1, 0))
+	fs := modtimevfs.New(template.Assets, time.Unix(1, 0))
 	err := vfsgen.Generate(fs, vfsgen.Options{
-		PackageName:  "asset",
-		BuildTags:    "!dev",
+		PackageName:  "template",
+		BuildTags:    "builtinassets",
 		VariableName: "Assets",
 	})
 	if err != nil {

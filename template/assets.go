@@ -11,9 +11,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// +build dev
+// +build !builtinassets
 
-package asset
+package template
 
 import (
 	"net/http"
@@ -25,7 +25,7 @@ import (
 )
 
 // Assets contains the project's assets.
-var Assets http.FileSystem = func() http.FileSystem {
+var Assets = func() http.FileSystem {
 	wd, err := os.Getwd()
 	if err != nil {
 		panic(err)
@@ -36,7 +36,7 @@ var Assets http.FileSystem = func() http.FileSystem {
 	case "prometheus-webhook-dingtalk":
 		// When running prometheus-webhook-dingtalk (without built-in assets) from the repo root.
 		assetsPrefix = "./"
-	case "asset":
+	case "template":
 		// When generating statically compiled-in assets.
 		assetsPrefix = "../"
 	}
@@ -48,15 +48,7 @@ var Assets http.FileSystem = func() http.FileSystem {
 		},
 	)
 
-	static := filter.Keep(
-		http.Dir(path.Join(assetsPrefix, "web/ui/static")),
-		func(path string, fi os.FileInfo) bool {
-			return fi.IsDir() || true
-		},
-	)
-
 	return union.New(map[string]http.FileSystem{
 		"/templates": templates,
-		"/static":    static,
 	})
 }()

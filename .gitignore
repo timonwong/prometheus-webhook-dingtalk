@@ -8,3 +8,4 @@ coverage.txt
 /config.yml
 
 /web/ui/static/react
+/web/ui/assets_vfsdata.go
