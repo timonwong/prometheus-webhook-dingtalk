@@ -1,5 +1,7 @@
 ## 1.2.2 / unreleased
 
+- [FIX] Fix excessive rendering requests while in web UI preview. #65
+
 ## 1.2.1 / 2019-12-08
 
 - [FIX] Fix default template (which misleads users).
