@@ -27,18 +27,20 @@ type Coordinator struct {
 	logger         log.Logger
 
 	// Protects config and subscribers
-	mutex       sync.Mutex
-	config      *Config
-	subscribers []func(*Config) error
+	mutex        sync.Mutex
+	config       *Config
+	frozenConfig *Config
+	subscribers  []func(*Config) error
 }
 
 // NewCoordinator returns a new coordinator with the given configuration file
 // path. It does not yet load the configuration from file. This is done in
 // `Reload()`.
-func NewCoordinator(configFilePath string, l log.Logger) *Coordinator {
+func NewCoordinator(configFilePath string, frozenConfig *Config, l log.Logger) *Coordinator {
 	c := &Coordinator{
 		configFilePath: configFilePath,
 		logger:         l,
+		frozenConfig:   frozenConfig,
 	}
 
 	return c
@@ -79,29 +81,24 @@ func (c *Coordinator) Reload() error {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
-	level.Info(c.logger).Log(
-		"msg", "Loading configuration file",
-		"file", c.configFilePath,
-	)
-	if err := c.loadFromFile(); err != nil {
-		level.Error(c.logger).Log(
-			"msg", "Loading configuration file failed",
-			"file", c.configFilePath,
-			"err", err,
-		)
-		return err
+	logger := log.With(c.logger, "file", c.configFilePath)
+	if c.frozenConfig != nil {
+		logger = c.logger
+		c.config = c.frozenConfig
+	} else {
+		level.Info(logger).Log("msg", "Loading configuration file")
+		if err := c.loadFromFile(); err != nil {
+			level.Error(logger).Log(
+				"msg", "Loading configuration file failed",
+				"err", err,
+			)
+			return err
+		}
+		level.Info(logger).Log("msg", "Completed loading of configuration file")
 	}
-	level.Info(c.logger).Log(
-		"msg", "Completed loading of configuration file",
-		"file", c.configFilePath,
-	)
 
 	if err := c.notifySubscribers(); err != nil {
-		c.logger.Log(
-			"msg", "one or more config change subscribers failed to apply new config",
-			"file", c.configFilePath,
-			"err", err,
-		)
+		logger.Log("msg", "one or more config change subscribers failed to apply new config", "err", err)
 		return err
 	}
 

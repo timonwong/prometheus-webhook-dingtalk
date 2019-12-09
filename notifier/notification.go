@@ -58,7 +58,7 @@ func BuildNotification(tmpl *template.Template, target *config.Target, m *models
 }
 
 func SendNotification(httpClient *http.Client, target *config.Target, notification *models.DingTalkNotification) (*models.DingTalkNotificationResponse, error) {
-	targetURL := target.URL.Copy()
+	targetURL := *target.URL
 	// Calculate signature when secret is provided
 	if target.Secret != "" {
 		timestamp := strconv.FormatInt(time.Now().UnixNano()/int64(time.Millisecond), 10)

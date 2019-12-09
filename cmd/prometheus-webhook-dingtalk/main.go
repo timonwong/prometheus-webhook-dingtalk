@@ -18,6 +18,7 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/timonwong/prometheus-webhook-dingtalk/config"
+	"github.com/timonwong/prometheus-webhook-dingtalk/internal/compat030"
 	"github.com/timonwong/prometheus-webhook-dingtalk/template"
 	"github.com/timonwong/prometheus-webhook-dingtalk/web"
 )
@@ -43,11 +44,12 @@ func run() int {
 		configFile = kingpin.Flag(
 			"config.file",
 			"Path to the configuration file.",
-		).Default("config.yml").ExistingFile()
+		).Default("config.yml").String()
 	)
 
-	// DO NOT REMOVE, For compatibility purpose
-	kingpin.Flag("web.ui-enabled", "Enable Web UI mounted on /ui path").Hidden().BoolVar(enableWebUI)
+	// DO NOT REMOVE. For compatibility purpose
+	kingpin.Flag("web.ui-enabled", "").Hidden().BoolVar(enableWebUI)
+	compat030Builder := compat030.NewBuilder(kingpin.CommandLine)
 
 	promlogConfig := &promlog.Config{}
 	flag.AddFlags(kingpin.CommandLine, promlogConfig)
@@ -86,9 +88,23 @@ func run() int {
 		Flags: flagsMap,
 	})
 
+	var compatConf *config.Config
+	if compat030Builder.IsCompatibleMode() {
+		var err error
+		compatConf, err = compat030Builder.BuildConfig()
+		if err != nil {
+			level.Error(logger).Log("msg", "Failed to build configuration from legacy commandline flags", "err", err)
+			return 1
+		}
+
+		level.Warn(logger).Log("msg", "DEPRECATION: Detected one of the following flags: --ding.profile, --ding.timeout, --template.file")
+		level.Warn(logger).Log("msg", "DEPRECATION: Now working in compatibility mode, please consider upgrading your configurations")
+	}
+
 	configLogger := log.With(logger, "component", "configuration")
 	configCoordinator := config.NewCoordinator(
 		*configFile,
+		compatConf,
 		configLogger,
 	)
 	configCoordinator.Subscribe(func(conf *config.Config) error {
