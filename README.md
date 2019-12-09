@@ -1,5 +1,9 @@
 # prometheus-webhook-dingtalk
 
+[![Build Status](https://img.shields.io/circleci/build/github/timonwong/prometheus-webhook-dingtalk)](https://circleci.com/gh/timonwong/prometheus-webhook-dingtalk)
+[![Go Report Card](https://goreportcard.com/badge/github.com/timonwong/prometheus-webhook-dingtalk)](https://goreportcard.com/report/github.com/timonwong/prometheus-webhook-dingtalk)
+[![Docker Pulls](https://img.shields.io/docker/pulls/timonwong/prometheus-webhook-dingtalk)](https://hub.docker.com/r/timonwong/prometheus-webhook-dingtalk)
+
 Generating [DingTalk] notification from [Prometheus] [AlertManager] WebHooks.
 
 ## Building and running
