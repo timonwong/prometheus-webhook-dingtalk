@@ -16,6 +16,7 @@ package web
 import (
 	"context"
 	"fmt"
+	"io"
 	"io/ioutil"
 	stdlog "log"
 	"net"
@@ -52,10 +53,11 @@ var (
 
 // Options for the web Handler.
 type Options struct {
-	ListenAddress string
-	EnableWebUI   bool
-	Version       *VersionInfo
-	Flags         map[string]string
+	ListenAddress   string
+	EnableWebUI     bool
+	EnableLifecycle bool
+	Version         *VersionInfo
+	Flags           map[string]string
 }
 
 type VersionInfo = apiv1.VersionInfo
@@ -68,6 +70,7 @@ type Handler struct {
 	dingTalk *dingtalk.API
 
 	router      chi.Router
+	reloadCh    chan chan error
 	options     *Options
 	config      *config.Config
 	tmpl        *template.Template
@@ -86,9 +89,13 @@ func New(logger log.Logger, o *Options) *Handler {
 		cwd = "<error retrieving current working directory>"
 	}
 
+	router := chi.NewRouter()
+
 	h := &Handler{
 		logger: logger,
 
+		router:      router,
+		reloadCh:    make(chan chan error),
 		options:     o,
 		versionInfo: o.Version,
 		birth:       time.Now(),
@@ -113,13 +120,24 @@ func New(logger log.Logger, o *Options) *Handler {
 	)
 	h.dingTalk = dingtalk.NewAPI(logger)
 
-	router := chi.NewRouter()
-	h.router = router
-
-	fs := server.StaticFileServer(ui.Assets)
 	router.Mount("/dingtalk", h.dingTalk.Routes())
 
+	if o.EnableLifecycle {
+		router.Post("/-/reload", h.reload)
+		router.Put("/-/reload", h.reload)
+	} else {
+		forbiddenAPINotEnabled := func(w http.ResponseWriter, _ *http.Request) {
+			w.WriteHeader(http.StatusForbidden)
+			io.WriteString(w, "Lifecycle API is not enabled.")
+		}
+
+		router.Post("/-/reload", forbiddenAPINotEnabled)
+		router.Put("/-/reload", forbiddenAPINotEnabled)
+	}
+
 	if o.EnableWebUI {
+		fs := server.StaticFileServer(ui.Assets)
+
 		router.Mount("/api/v1", h.apiV1.Routes())
 		router.Get("/static/*", fs.ServeHTTP)
 		// Make sure that "/ui" is redirected to "/ui/" and
@@ -149,7 +167,7 @@ func New(logger log.Logger, o *Options) *Handler {
 					fmt.Fprintf(w, "Error reading React index.html: %v", err)
 					return
 				}
-				w.Write(idx) // nolint: errcheck
+				w.Write(idx)
 				return
 			}
 
@@ -199,6 +217,22 @@ func (h *Handler) Run(ctx context.Context) error {
 	case <-ctx.Done():
 		return nil
 	}
+}
+
+// Reload returns the receive-only channel that signals configuration reload requests.
+func (h *Handler) Reload() <-chan chan error {
+	return h.reloadCh
+}
+
+func (h *Handler) reload(w http.ResponseWriter, r *http.Request) {
+	rc := make(chan error)
+	h.reloadCh <- rc
+	if err := <-rc; err != nil {
+		http.Error(w, fmt.Sprintf("failed to reload config: %s", err), http.StatusInternalServerError)
+		return
+	}
+
+	io.WriteString(w, "OK")
 }
 
 func (h *Handler) runtimeInfo() (*apiv1.RuntimeInfo, error) {
