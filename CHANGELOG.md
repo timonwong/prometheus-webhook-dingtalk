@@ -1,4 +1,4 @@
-## 1.3.0 / unreleased
+## 1.3.0 / 2019-12-09
 
 - [FEATURE/ENHANCEMENT] Improved compatibility: Now the following v0.3.0 command line flags are supported as well: `--ding.profile`, `--ding.timeout` and `--template.file`. #72
 - [FEATURE/ENHANCEMENT] Add support to reload through API `/-/reload` (Disabled by default, can be enabled via the `--web.enable-lifecycle` flag). #70
