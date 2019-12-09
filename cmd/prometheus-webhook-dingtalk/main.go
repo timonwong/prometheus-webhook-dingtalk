@@ -36,6 +36,10 @@ func run() int {
 			"web.ui-enabled",
 			"Enable Web UI mounted on /ui path",
 		).Default("false").Bool()
+		enableLifecycle = kingpin.Flag(
+			"web.enable-lifecycle",
+			"Enable reload via HTTP request.",
+		).Default("false").Bool()
 		configFile = kingpin.Flag(
 			"config.file",
 			"Path to the configuration file.",
@@ -65,8 +69,9 @@ func run() int {
 	}
 
 	webHandler := web.New(log.With(logger, "component", "web"), &web.Options{
-		ListenAddress: *listenAddress,
-		EnableWebUI:   *enableWebUI,
+		ListenAddress:   *listenAddress,
+		EnableWebUI:     *enableWebUI,
+		EnableLifecycle: *enableLifecycle,
 		Version: &web.VersionInfo{
 			Version:   version.Version,
 			Revision:  version.Revision,
@@ -124,15 +129,15 @@ func run() int {
 	}()
 
 	var (
-		hup      = make(chan os.Signal, 1)
-		hupReady = make(chan bool)
-		term     = make(chan os.Signal, 1)
+		reloadReady = make(chan bool)
+		hup         = make(chan os.Signal, 1)
+		term        = make(chan os.Signal, 1)
 	)
 	signal.Notify(hup, syscall.SIGHUP)
 	signal.Notify(term, os.Interrupt, syscall.SIGTERM)
 
 	go func() {
-		<-hupReady
+		<-reloadReady
 		for {
 			select {
 			case <-ctxWeb.Done():
@@ -140,12 +145,18 @@ func run() int {
 			case <-hup:
 				// ignore error, already logged in `reload()`
 				_ = configCoordinator.Reload()
+			case rc := <-webHandler.Reload():
+				if err := configCoordinator.Reload(); err != nil {
+					rc <- err
+				} else {
+					rc <- nil
+				}
 			}
 		}
 	}()
 
 	// Wait for reload or termination signals.
-	close(hupReady) // Unblock SIGHUP handler.
+	close(reloadReady) // Unblock SIGHUP handler.
 
 	for {
 		select {

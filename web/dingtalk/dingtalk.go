@@ -101,5 +101,5 @@ func (api *API) send(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	io.WriteString(w, "OK") // nolint: errcheck
+	io.WriteString(w, "OK")
 }

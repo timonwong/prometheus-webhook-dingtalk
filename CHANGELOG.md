@@ -1,3 +1,7 @@
+## 1.3.0 / unreleased
+
+- [FEATURE/ENHANCEMENT] Add support to reload through API `/-/reload` (Disabled by default, can be enabled via the `--web.enable-lifecycle` flag).
+
 ## 1.2.2 / 2019-12-09
 
 - [FIX] Fix excessive rendering requests while in web UI preview. #65
