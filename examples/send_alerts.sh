@@ -1,62 +1,14 @@
 #!/bin/bash
 
-alerts1='{
-    "receiver": "admins",
-    "status": "firing",
-    "alerts": [
-        {
-            "status": "firing",
-            "labels": {
-                "alertname": "something_happened",
-                "env": "prod",
-                "instance": "server01.int:9100",
-                "job": "node",
-                "service": "prometheus_bot",
-                "severity": "warning",
-                "supervisor": "runit"
-            },
-            "annotations": {
-                "summary": "Oops, something happened!"
-            },
-            "startsAt": "2016-04-27T20:46:37.903Z",
-            "endsAt": "0001-01-01T00:00:00Z",
-            "generatorURL": "https://example.com/graph#..."
-        },
-        {
-            "status": "firing",
-            "labels": {
-                "alertname": "something_happened",
-                "env": "staging",
-                "instance": "server02.int:9100",
-                "job": "node",
-                "service": "prometheus_bot",
-                "severity": "warning",
-                "supervisor": "runit"
-            },
-            "annotations": {
-                "summary": "Oops, something happend!"
-            },
-            "startsAt": "2016-04-27T20:49:37.903Z",
-            "endsAt": "0001-01-01T00:00:00Z",
-            "generatorURL": "https://example.com/graph#..."
-        }
-    ],
-    "groupLabels": {
-        "alertname": "something_happened",
-        "instance": "server01.int:9100"
-    },
-    "commonLabels": {
-        "alertname": "something_happened",
-        "job": "node",
-        "service": "prometheus_bot",
-        "severity": "warning",
-        "supervisor": "runit"
-    },
-    "commonAnnotations": {
-        "summary": "runit service prometheus_bot restarted, server01.int:9100"
-    },
-    "externalURL": "https://alert-manager.example.com",
-    "version": "3"
-}'
+SOURCE="${BASH_SOURCE[0]}"
+while [[ -h "$SOURCE" ]]; do # resolve $SOURCE until the file is no longer a symlink
+  DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ ${SOURCE} != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+done
+DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
 
-curl -XPOST -d"$alerts1" http://localhost:8060/dingtalk/webhook1/send
+# demoAlerts file: /web/ui/react-app/src/pages/PlaygroundDemoAlert.json
+demoAlerts=$(<$DIR/../web/ui/react-app/src/pages/PlaygroundDemoAlert.json)
+
+curl -XPOST -d"$demoAlerts" http://localhost:8060/dingtalk/webhook1/send
