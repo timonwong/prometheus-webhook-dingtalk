@@ -160,6 +160,7 @@ func run() int {
 
 	// Wait for reload or termination signals.
 	close(reloadReady) // Unblock SIGHUP handler.
+	webHandler.Ready()
 
 	for {
 		select {
