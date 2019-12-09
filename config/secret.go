@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"regexp"
+	"sort"
+	"strings"
 )
 
 const secretToken = "<secret>"
@@ -80,10 +83,45 @@ func (s SecretURL) Copy() SecretURL {
 	return SecretURL(URL{URL: &v})
 }
 
+var secretRE = regexp.MustCompile(`(?i)(secret|token|key|nonce|digest)`)
+
 // MarshalYAML implements the yaml.Marshaler interface for SecretURL.
 func (s SecretURL) MarshalYAML() (interface{}, error) {
 	if s.URL != nil {
-		return secretToken, nil
+		v := *s.URL
+		qs := v.Query()
+		keys := make([]string, 0, len(qs))
+		for k := range qs {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+
+		var buf strings.Builder
+		for _, k := range keys {
+			keyEscaped := url.QueryEscape(k)
+
+			if secretRE.MatchString(k) {
+				if buf.Len() > 0 {
+					buf.WriteByte('&')
+				}
+
+				buf.WriteString(keyEscaped)
+				buf.WriteByte('=')
+				buf.WriteString("<secret>")
+				continue
+			}
+
+			for _, v := range qs[k] {
+				if buf.Len() > 0 {
+					buf.WriteByte('&')
+				}
+				buf.WriteString(keyEscaped)
+				buf.WriteByte('=')
+				buf.WriteString(url.QueryEscape(v))
+			}
+		}
+		v.RawQuery = buf.String()
+		return v.String(), nil
 	}
 	return nil, nil
 }
