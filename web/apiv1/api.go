@@ -212,9 +212,10 @@ type RuntimeInfo struct {
 	CWD       string    `json:"CWD"`
 	//ReloadConfigSuccess bool      `json:"reloadConfigSuccess"`
 	//LastConfigTime      time.Time `json:"lastConfigTime"`
-	GOMAXPROCS int    `json:"GOMAXPROCS"`
-	GOGC       string `json:"GOGC"`
-	GODEBUG    string `json:"GODEBUG"`
+	GoroutineCount int    `json:"goroutineCount"`
+	GOMAXPROCS     int    `json:"GOMAXPROCS"`
+	GOGC           string `json:"GOGC"`
+	GODEBUG        string `json:"GODEBUG"`
 }
 
 func (api *API) serveRuntimeInfo(r *http.Request) apiFuncResult {
