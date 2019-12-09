@@ -18,15 +18,12 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"text/template"
-	tmpltext "text/template"
 
 	"github.com/Masterminds/sprig/v3"
-
-	"github.com/timonwong/prometheus-webhook-dingtalk/asset"
 )
 
 type Template struct {
-	tmpl *tmpltext.Template
+	tmpl *template.Template
 }
 
 // FromGlobs calls ParseGlob on all path globs provided and returns the
@@ -38,7 +35,7 @@ func FromGlobs(paths ...string) (*Template, error) {
 	var err error
 	t.tmpl = t.tmpl.Funcs(defaultFuncs).Funcs(sprig.TxtFuncMap())
 
-	f, err := asset.Assets.Open("/templates/default.tmpl")
+	f, err := Assets.Open("/templates/default.tmpl")
 	if err != nil {
 		return nil, err
 	}
