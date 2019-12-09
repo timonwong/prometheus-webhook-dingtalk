@@ -33,7 +33,7 @@ func run() int {
 			"The address to listen on for web interface.",
 		).Default(":8060").String()
 		enableWebUI = kingpin.Flag(
-			"web.ui-enabled",
+			"web.enable-ui",
 			"Enable Web UI mounted on /ui path",
 		).Default("false").Bool()
 		enableLifecycle = kingpin.Flag(
@@ -45,6 +45,9 @@ func run() int {
 			"Path to the configuration file.",
 		).Default("config.yml").ExistingFile()
 	)
+
+	// DO NOT REMOVE, For compatibility purpose
+	kingpin.Flag("web.ui-enabled", "Enable Web UI mounted on /ui path").Hidden().BoolVar(enableWebUI)
 
 	promlogConfig := &promlog.Config{}
 	flag.AddFlags(kingpin.CommandLine, promlogConfig)

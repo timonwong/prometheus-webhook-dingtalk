@@ -1,6 +1,6 @@
 ## 1.3.0 / unreleased
 
-- [FEATURE/ENHANCEMENT] Add support to reload through API `/-/reload` (Disabled by default, can be enabled via the `--web.enable-lifecycle` flag).
+- [FEATURE/ENHANCEMENT] Add support to reload through API `/-/reload` (Disabled by default, can be enabled via the `--web.enable-lifecycle` flag). #70
 
 ## 1.2.2 / 2019-12-09
 

@@ -5,7 +5,7 @@
 模板语法是 golang 的 [text/template](https://golang.org/pkg/text/template/), 需要一定的学习来掌握。
 可以使用 [sprig](http://masterminds.github.io/sprig/) 提供的各种工具简化模板编写。
 
-最后，在程序启动时指定 `--web.ui-enabled` 参数, 启动后访问 `http://localhost:8060/ui` 进行验证，如图所示:
+最后，在程序启动时指定 `--web.enable-ui ` 参数, 启动后访问 `http://localhost:8060/ui` 进行验证，如图所示:
 
 ![](./images/playground.png)
 
