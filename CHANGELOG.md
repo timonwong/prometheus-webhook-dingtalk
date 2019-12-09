@@ -1,4 +1,4 @@
-## 1.2.2 / unreleased
+## 1.2.2 / 2019-12-09
 
 - [FIX] Fix excessive rendering requests while in web UI preview. #65
 
