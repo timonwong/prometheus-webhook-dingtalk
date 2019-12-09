@@ -26,6 +26,7 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/go-chi/chi"
@@ -77,6 +78,8 @@ type Handler struct {
 	versionInfo *VersionInfo
 	birth       time.Time
 	cwd         string
+
+	ready uint32 // ready is uint32 rather than boolean to be able to use atomic functions.
 }
 
 func New(logger log.Logger, o *Options) *Handler {
@@ -134,6 +137,16 @@ func New(logger log.Logger, o *Options) *Handler {
 		router.Post("/-/reload", forbiddenAPINotEnabled)
 		router.Put("/-/reload", forbiddenAPINotEnabled)
 	}
+
+	readyf := h.testReady
+
+	router.Get("/-/healthy", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		io.WriteString(w, "OK.\n")
+	})
+	router.Get("/-/ready", readyf(func(w http.ResponseWriter, r *http.Request) {
+		io.WriteString(w, "OK.\n")
+	}))
 
 	if o.EnableWebUI {
 		fs := server.StaticFileServer(ui.Assets)
@@ -215,6 +228,7 @@ func (h *Handler) Run(ctx context.Context) error {
 	case e := <-errCh:
 		return e
 	case <-ctx.Done():
+		httpSrv.Shutdown(ctx)
 		return nil
 	}
 }
@@ -233,6 +247,29 @@ func (h *Handler) reload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	io.WriteString(w, "OK")
+}
+
+// Ready sets Handler to be ready.
+func (h *Handler) Ready() {
+	atomic.StoreUint32(&h.ready, 1)
+}
+
+// Verifies whether the server is ready or not.
+func (h *Handler) isReady() bool {
+	ready := atomic.LoadUint32(&h.ready)
+	return ready > 0
+}
+
+// Checks if server is ready, calls f if it is, returns 503 if it is not.
+func (h *Handler) testReady(f http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if h.isReady() {
+			f(w, r)
+		} else {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			io.WriteString(w, "Service Unavailable")
+		}
+	}
 }
 
 func (h *Handler) runtimeInfo() (*apiv1.RuntimeInfo, error) {
