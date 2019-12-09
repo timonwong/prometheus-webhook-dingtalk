@@ -1,4 +1,4 @@
-import React, { FC, useState } from 'react';
+import React, { FC, useEffect, useState } from 'react';
 import { RouteComponentProps } from '@reach/router';
 import {
   Alert,
@@ -24,13 +24,13 @@ import markdown from 'react-syntax-highlighter/dist/esm/languages/hljs/markdown'
 import { atomOneLight } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import classnames from 'classnames';
 import './Playground.css';
+import demoAlert from './PlaygroundDemoAlert.json';
 import { useFetch } from '../utils/useFetch';
 
 SyntaxHighlighter.registerLanguage('markdown', markdown);
 
 type TemplateConfig = {
   name: string;
-  title: string;
   text: string;
 };
 
@@ -38,92 +38,25 @@ type TemplatesConfig = {
   templates: [TemplateConfig];
 };
 
-type APIRenderData = {
+type RenderApiData = {
   markdown: string;
 };
 
-interface APIRenderResponse {
+interface RenderApiResponse {
   status: string;
   error?: string;
   errorType?: string;
-  data?: APIRenderData;
+  data?: RenderApiData;
 }
 
-const demoAlertJSON = `{
-    "receiver": "admins",
-    "status": "firing",
-    "alerts": [
-        {
-            "status": "firing",
-            "labels": {
-                "alertname": "something_happened",
-                "env": "prod",
-                "instance": "server01.int:9100",
-                "job": "node",
-                "service": "prometheus_bot",
-                "severity": "warning",
-                "supervisor": "runit"
-            },
-            "annotations": {
-                "summary": "Oops, something happened!"
-            },
-            "startsAt": "2016-04-27T20:46:37.903Z",
-            "endsAt": "0001-01-01T00:00:00Z",
-            "generatorURL": "https://example.com/graph#..."
-        },
-        {
-            "status": "firing",
-            "labels": {
-                "alertname": "something_happened",
-                "env": "staging",
-                "instance": "server02.int:9100",
-                "job": "node",
-                "service": "prometheus_bot",
-                "severity": "warning",
-                "supervisor": "runit"
-            },
-            "annotations": {
-                "summary": "Oops, something happend!"
-            },
-            "startsAt": "2016-04-27T20:49:37.903Z",
-            "endsAt": "0001-01-01T00:00:00Z",
-            "generatorURL": "https://example.com/graph#..."
-        }
-    ],
-    "groupLabels": {
-        "alertname": "something_happened",
-        "instance": "server01.int:9100"
-    },
-    "commonLabels": {
-        "alertname": "something_happened",
-        "job": "node",
-        "service": "prometheus_bot",
-        "severity": "warning",
-        "supervisor": "runit"
-    },
-    "commonAnnotations": {
-        "summary": "runit service prometheus_bot restarted, server01.int:9100"
-    },
-    "externalURL": "https://alert-manager.example.com",
-    "version": "3"
-}`;
+const demoAlertJson = JSON.stringify(demoAlert, null, 2);
 
 const initialInputs = {
-  title: `{{ template "ding.link.title" . }}`,
   text: `{{ template "ding.link.content" . }}`,
-  demoAlertJSON: demoAlertJSON,
+  demoAlertJSON: demoAlertJson,
 };
 
 const Playground: FC<RouteComponentProps> = () => {
-  const { response: templateConfigResp } = useFetch<TemplatesConfig>('/api/v1/status/templates');
-
-  let templateValue: string;
-  let templates: TemplateConfig[] = [];
-  if (templateConfigResp && templateConfigResp.data && templateConfigResp.data.templates) {
-    templates = templateConfigResp.data.templates;
-    templateValue = '0';
-  }
-
   const [leftActiveTab, setLeftActiveTab] = useState('1');
   const [rightActiveTab, setRightActiveTab] = useState('1');
   const [inputs, setInputs] = useState(initialInputs);
@@ -135,7 +68,7 @@ const Playground: FC<RouteComponentProps> = () => {
         body: JSON.stringify(inputs),
       });
 
-      const json = (await res.json()) as APIRenderResponse;
+      const json = (await res.json()) as RenderApiResponse;
       if (res.ok) {
         setRenderError(false);
 
@@ -144,41 +77,47 @@ const Playground: FC<RouteComponentProps> = () => {
         }
       } else {
         setRenderError(true);
-        console.log(`Error rendering template: ${json.error}`);
+        console.info(`Error rendering template: ${json.error}`);
       }
     } catch (e) {
       setRenderError(true);
-      console.log(`Unhandled error rendering template: ${e.toString()}`);
+      console.info(`Unhandled error rendering template: ${e.toString()}`);
     }
   };
-
   const [delayedRender] = useDebouncedCallback(() => {
     startRenderMarkdown();
-  }, 500);
+  }, 250);
 
-  const [markdownInitialized, setMarkdownInitialized] = useState(false);
-  if (!markdownInitialized) {
-    setMarkdownInitialized(true);
-    startRenderMarkdown();
-  }
+  useEffect(() => {
+    delayedRender();
+  }, [delayedRender, inputs]);
+
   const [markdown, setMarkdown] = useState('');
   const [renderError, setRenderError] = useState(false);
 
+  const { response: templateConfigResp } = useFetch<TemplatesConfig>('/api/v1/status/templates');
+  let templates: TemplateConfig[] = [];
+  if (templateConfigResp && templateConfigResp.data && templateConfigResp.data.templates) {
+    templates = templateConfigResp.data.templates;
+  }
+  const [currentTemplate, setCurrentTemplate] = useState({ text: initialInputs.text });
   const handleTemplateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    templateValue = event.target.value;
+    try {
+      const idx = parseInt(event.target.value, 10);
+      const tpl = templates[idx];
+      setCurrentTemplate({ text: tpl.text });
+    } catch (e) {
+      setCurrentTemplate({ text: initialInputs.text });
+    }
   };
   const loadTemplate = () => {
-    if (templateValue) {
-      const tpl = templates[parseInt(templateValue)];
-      const newState = {
-        ...inputs,
-        ...{
-          title: tpl.title,
-          text: tpl.text,
-        },
-      };
-      setInputs(newState);
-    }
+    const newState = {
+      ...inputs,
+      ...{
+        text: currentTemplate.text,
+      },
+    };
+    setInputs(newState);
   };
 
   const templateLoaderComponent = (
@@ -240,18 +179,6 @@ const Playground: FC<RouteComponentProps> = () => {
           <TabContent activeTab={leftActiveTab}>
             <TabPane tabId="1">
               <Form>
-                {/*<FormGroup>*/}
-                {/*  <Label className="form-label">Markdown Title:</Label>*/}
-                {/*  <Input*/}
-                {/*    type="textarea"*/}
-                {/*    className="text-monospace"*/}
-                {/*    value={inputs.title}*/}
-                {/*    onChange={evt => {*/}
-                {/*      setInputs({ ...inputs, ...{ title: evt.target.value } });*/}
-                {/*      delayedRender();*/}
-                {/*    }}*/}
-                {/*  />*/}
-                {/*</FormGroup>*/}
                 <FormGroup>
                   <Label className="form-label">Markdown Text:</Label>
                   <Input
@@ -259,10 +186,7 @@ const Playground: FC<RouteComponentProps> = () => {
                     className="text-monospace"
                     style={{ height: '500px' }}
                     value={inputs.text}
-                    onChange={evt => {
-                      setInputs({ ...inputs, ...{ text: evt.target.value } });
-                      delayedRender();
-                    }}
+                    onChange={evt => setInputs({ ...inputs, ...{ text: evt.target.value } })}
                   />
                 </FormGroup>
               </Form>
@@ -276,10 +200,7 @@ const Playground: FC<RouteComponentProps> = () => {
                     className="text-monospace"
                     style={{ height: '500px' }}
                     value={inputs.demoAlertJSON}
-                    onChange={evt => {
-                      setInputs({ ...inputs, ...{ demoAlertJSON: evt.target.value } });
-                      delayedRender();
-                    }}
+                    onChange={evt => setInputs({ ...inputs, ...{ demoAlertJSON: evt.target.value } })}
                   />
                 </FormGroup>
               </Form>
