@@ -30,6 +30,7 @@ Flags:
       --web.listen-address=:8060
                                 The address to listen on for web interface.
       --web.enable-ui           Enable Web UI mounted on /ui path
+      --web.enable-lifecycle    Enable reload via HTTP request.
       --config.file=config.yml  Path to the configuration file.
       --log.level=info          Only log messages with the given severity or above. One of: [debug, info, warn, error]
       --log.format=logfmt       Output format of log messages. One of: [logfmt, json]
