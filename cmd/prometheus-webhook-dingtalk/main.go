@@ -70,6 +70,11 @@ func run() int {
 			continue
 		}
 
+		// filter hidden flags (they are just reserved for compatibility purpose)
+		if f.Hidden {
+			continue
+		}
+
 		flagsMap[f.Name] = f.Value.String()
 	}
 
