@@ -274,11 +274,12 @@ func (h *Handler) testReady(f http.HandlerFunc) http.HandlerFunc {
 
 func (h *Handler) runtimeInfo() (*apiv1.RuntimeInfo, error) {
 	status := &apiv1.RuntimeInfo{
-		StartTime:  h.birth,
-		CWD:        h.cwd,
-		GOMAXPROCS: runtime.GOMAXPROCS(0),
-		GOGC:       os.Getenv("GOGC"),
-		GODEBUG:    os.Getenv("GODEBUG"),
+		StartTime:      h.birth,
+		CWD:            h.cwd,
+		GoroutineCount: runtime.NumGoroutine(),
+		GOMAXPROCS:     runtime.GOMAXPROCS(0),
+		GOGC:           os.Getenv("GOGC"),
+		GODEBUG:        os.Getenv("GODEBUG"),
 	}
 	return status, nil
 }
