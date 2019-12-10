@@ -22,6 +22,7 @@ type API struct {
 	// Protect against config, template and http client
 	mtx sync.RWMutex
 
+	conf       *config.Config
 	tmpl       *template.Template
 	targets    map[string]config.Target
 	httpClient *http.Client
@@ -38,6 +39,8 @@ func (api *API) Update(conf *config.Config, tmpl *template.Template) {
 	api.mtx.Lock()
 	defer api.mtx.Unlock()
 
+	api.conf = conf
+	api.tmpl = tmpl
 	api.targets = conf.Targets
 	api.httpClient = &http.Client{
 		Transport: &http.Transport{
@@ -45,7 +48,6 @@ func (api *API) Update(conf *config.Config, tmpl *template.Template) {
 			DisableKeepAlives: true,
 		},
 	}
-	api.tmpl = tmpl
 }
 
 func (api *API) Routes() chi.Router {
@@ -53,13 +55,14 @@ func (api *API) Routes() chi.Router {
 	router.Use(middleware.RealIP)
 	router.Use(middleware.RequestLogger(&chilog.KitLogger{Logger: api.logger}))
 	router.Use(middleware.Recoverer)
-	router.Post("/{name}/send", api.send)
+	router.Post("/{name}/send", api.serveSend)
 	return router
 }
 
-func (api *API) send(w http.ResponseWriter, r *http.Request) {
+func (api *API) serveSend(w http.ResponseWriter, r *http.Request) {
 	api.mtx.RLock()
 	targets := api.targets
+	conf := api.conf
 	tmpl := api.tmpl
 	httpClient := api.httpClient
 	api.mtx.RUnlock()
@@ -81,7 +84,8 @@ func (api *API) send(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	notification, err := notifier.BuildNotification(tmpl, &target, &promMessage)
+	builder := notifier.NewDingNotificationBuilder(tmpl, conf, &target)
+	notification, err := builder.Build(&promMessage)
 	if err != nil {
 		level.Error(logger).Log("msg", "Failed to build notification", "err", err)
 		http.Error(w, "Bad Request", http.StatusBadRequest)

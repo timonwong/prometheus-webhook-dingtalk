@@ -185,7 +185,8 @@ func (api *API) serveRenderTemplate(r *http.Request) apiFuncResult {
 			Text:  req.Text,
 		},
 	}
-	notification, err := notifier.BuildNotification(api.tmpl(), target, &webhookMessage)
+	builder := notifier.NewDingNotificationBuilder(api.tmpl(), api.config(), target)
+	notification, err := builder.Build(&webhookMessage)
 	if err != nil {
 		return apiFuncResult{nil, &apiError{errorBadData, err}}
 	}

@@ -19,21 +19,55 @@ import (
 	"github.com/timonwong/prometheus-webhook-dingtalk/template"
 )
 
-func BuildNotification(tmpl *template.Template, target *config.Target, m *models.WebhookMessage) (*models.DingTalkNotification, error) {
+type DingNotificationBuilder struct {
+	tmpl     *template.Template
+	target   *config.Target
+	titleTpl string
+	textTpl  string
+}
+
+func NewDingNotificationBuilder(tmpl *template.Template, conf *config.Config, target *config.Target) *DingNotificationBuilder {
 	var (
-		titleTpl   = config.DefaultTargetMessage.Title
-		contentTpl = config.DefaultTargetMessage.Text
+		titleTpl = config.DefaultTargetMessage.Title
+		textTpl  = config.DefaultTargetMessage.Text
 	)
-	if target.Message != nil {
-		titleTpl = target.Message.Title
-		contentTpl = target.Message.Text
+
+	// Message template from the following order:
+	//   target level > config global level > builtin global level
+	var candidates = []*config.TargetMessage{
+		target.Message,
+		conf.DefaultMessage,
+	}
+	for _, candidate := range candidates {
+		if candidate != nil {
+			titleTpl = candidate.Title
+			textTpl = candidate.Text
+			break
+		}
 	}
 
-	title, err := tmpl.ExecuteTextString(titleTpl, m)
+	return &DingNotificationBuilder{
+		tmpl:     tmpl,
+		target:   target,
+		titleTpl: titleTpl,
+		textTpl:  textTpl,
+	}
+}
+
+func (r *DingNotificationBuilder) renderTitle(data interface{}) (string, error) {
+	return r.tmpl.ExecuteTextString(r.titleTpl, data)
+}
+
+func (r *DingNotificationBuilder) renderText(data interface{}) (string, error) {
+	return r.tmpl.ExecuteTextString(r.textTpl, data)
+}
+
+func (r *DingNotificationBuilder) Build(m *models.WebhookMessage) (*models.DingTalkNotification, error) {
+	title, err := r.renderTitle(m)
 	if err != nil {
 		return nil, err
 	}
-	content, err := tmpl.ExecuteTextString(contentTpl, m)
+	content, err := r.renderText(m)
 	if err != nil {
 		return nil, err
 	}
@@ -47,10 +81,10 @@ func BuildNotification(tmpl *template.Template, target *config.Target, m *models
 	}
 
 	// Build mention
-	if target.Mention != nil {
+	if r.target.Mention != nil {
 		notification.At = &models.DingTalkNotificationAt{
-			IsAtAll:   target.Mention.All,
-			AtMobiles: target.Mention.Mobiles,
+			IsAtAll:   r.target.Mention.All,
+			AtMobiles: r.target.Mention.Mobiles,
 		}
 	}
 
