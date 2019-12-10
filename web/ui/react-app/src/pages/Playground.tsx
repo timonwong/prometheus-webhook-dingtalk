@@ -238,7 +238,14 @@ const Playground: FC<RouteComponentProps> = () => {
                   <div className="preview">
                     <div className="clearfix preview-content-area">
                       <div className="message-bubble">
-                        <ReactMarkdown source={markdown} className={'markdown-content'} />
+                        <ReactMarkdown
+                          source={markdown}
+                          className={'markdown-content'}
+                          parserOptions={{
+                            gfm: false,
+                            commonmark: true,
+                          }}
+                        />
                       </div>
                     </div>
                   </div>
