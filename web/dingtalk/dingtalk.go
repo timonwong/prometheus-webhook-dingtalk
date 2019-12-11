@@ -92,7 +92,7 @@ func (api *API) serveSend(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	robotResp, err := notifier.SendNotification(httpClient, &target, notification)
+	robotResp, err := notifier.SendNotification(notification, httpClient, &target)
 	if err != nil {
 		level.Error(logger).Log("msg", "Failed to send notification", "err", err)
 		http.Error(w, "Bad Request", http.StatusBadRequest)

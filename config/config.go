@@ -72,12 +72,19 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
-func (c Config) String() string {
+func (c *Config) String() string {
 	b, err := yaml.Marshal(c)
 	if err != nil {
 		return fmt.Sprintf("<error creating config string: %s>", err)
 	}
 	return string(b)
+}
+
+func (c *Config) GetDefaultMessage() TargetMessage {
+	if c.DefaultMessage != nil {
+		return *c.DefaultMessage
+	}
+	return DefaultTargetMessage
 }
 
 type Target struct {
