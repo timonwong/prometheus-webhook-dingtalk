@@ -1,6 +1,9 @@
-## 1.4.0 / unreleased
+## 1.4.0 / 2019-12-11
 
 - [FEATURE/ENHANCEMENT] Allow override global default message template in config file. #76
+- [CHANGE] UI: Use CommonMark instead of GFM.
+- [ENHANCEMENT] Filter hidden flags in flags UI. #73
+- [ENHANCEMENT] Add goroutine info in runtime UI. #74
 
 ## 1.3.0 / 2019-12-09
 
