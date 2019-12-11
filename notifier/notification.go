@@ -27,23 +27,18 @@ type DingNotificationBuilder struct {
 }
 
 func NewDingNotificationBuilder(tmpl *template.Template, conf *config.Config, target *config.Target) *DingNotificationBuilder {
-	var (
-		titleTpl = config.DefaultTargetMessage.Title
-		textTpl  = config.DefaultTargetMessage.Text
-	)
-
 	// Message template from the following order:
 	//   target level > config global level > builtin global level
-	var candidates = []*config.TargetMessage{
-		target.Message,
-		conf.DefaultMessage,
-	}
-	for _, candidate := range candidates {
-		if candidate != nil {
-			titleTpl = candidate.Title
-			textTpl = candidate.Text
-			break
-		}
+
+	var (
+		defaultMessage = conf.GetDefaultMessage()
+		titleTpl       = defaultMessage.Title
+		textTpl        = defaultMessage.Text
+	)
+
+	if target.Message != nil {
+		titleTpl = target.Message.Title
+		textTpl = target.Message.Text
 	}
 
 	return &DingNotificationBuilder{
@@ -91,7 +86,7 @@ func (r *DingNotificationBuilder) Build(m *models.WebhookMessage) (*models.DingT
 	return notification, nil
 }
 
-func SendNotification(httpClient *http.Client, target *config.Target, notification *models.DingTalkNotification) (*models.DingTalkNotificationResponse, error) {
+func SendNotification(notification *models.DingTalkNotification, httpClient *http.Client, target *config.Target) (*models.DingTalkNotificationResponse, error) {
 	targetURL := *target.URL
 	// Calculate signature when secret is provided
 	if target.Secret != "" {

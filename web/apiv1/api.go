@@ -133,19 +133,20 @@ func (api *API) serveTemplates(r *http.Request) apiFuncResult {
 	}
 
 	conf := api.config()
+	defaultMessage := conf.GetDefaultMessage()
 	templates := []templateInfo{
 		{
 			Target: "<default>",
-			Title:  config.DefaultTargetMessage.Title,
-			Text:   config.DefaultTargetMessage.Text,
+			Title:  defaultMessage.Title,
+			Text:   defaultMessage.Text,
 		},
 	}
 	for name, target := range conf.Targets {
 		if target.Message == nil {
 			templates = append(templates, templateInfo{
 				Target: name,
-				Title:  config.DefaultTargetMessage.Title,
-				Text:   config.DefaultTargetMessage.Text,
+				Title:  defaultMessage.Title,
+				Text:   defaultMessage.Text,
 			})
 		} else {
 			templates = append(templates, templateInfo{
