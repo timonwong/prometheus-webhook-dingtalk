@@ -49,6 +49,12 @@ Flags:
 # templates:
 #   - contrib/templates/legacy/template.tmpl
 
+## You can also override default template using `default_message`
+## The following example to use the 'legacy' template from v0.3.0
+# default_message:
+#   title: '{{ template "legacy.title" . }}'
+#   text: '{{ template "legacy.content" . }}'
+
 ## Targets, previously was known as "profiles"
 targets:
   webhook1:
