@@ -1,3 +1,7 @@
+## 1.4.0 / unreleased
+
+- [FEATURE/ENHANCEMENT] Allow override global default message template in config file. #76
+
 ## 1.3.0 / 2019-12-09
 
 - [FEATURE/ENHANCEMENT] Improved compatibility: Now the following v0.3.0 command line flags are supported as well: `--ding.profile`, `--ding.timeout` and `--template.file`. #72
