@@ -20,7 +20,7 @@ var (
 		Text:  `{{ template "ding.link.content" . }}`,
 	}
 
-	targetValidNameRe = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9\-_]*$`)
+	TargetValidNameRE = regexp.MustCompile(`^[a-zA-Z][a-zA-Z0-9\-_]*$`)
 )
 
 func LoadFile(filename string) (*Config, error) {
@@ -60,8 +60,8 @@ func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 
 	for name := range c.Targets {
-		if !targetValidNameRe.MatchString(name) {
-			return fmt.Errorf("invalid target name: %s", name)
+		if !TargetValidNameRE.MatchString(name) {
+			return fmt.Errorf("invalid target name: %q", name)
 		}
 	}
 

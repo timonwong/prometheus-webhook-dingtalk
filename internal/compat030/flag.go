@@ -1,16 +1,17 @@
 package compat030
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
 	"gopkg.in/alecthomas/kingpin.v2"
+
+	"github.com/timonwong/prometheus-webhook-dingtalk/config"
 )
 
-type dingTalkProfilesValue map[string]string
+type dingTalkProfilesValue map[string]*config.SecretURL
 
-func dingTalkProfiles(s kingpin.Settings) (target *dingTalkProfilesValue) {
+func asDingTalkProfiles(s kingpin.Settings) (target *dingTalkProfilesValue) {
 	target = &dingTalkProfilesValue{}
 	s.SetValue(target)
 	return
@@ -20,23 +21,28 @@ func (s *dingTalkProfilesValue) Set(value string) error {
 	parts := strings.SplitN(value, "=", 2)
 	profile, webhookURL := strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1])
 
-	if profile == "" {
-		return errors.New("profile part cannot be empty")
-	}
-	if webhookURL == "" {
-		return errors.New("webhook-url part cannot be emtpy")
+	// Validate profile name
+	if !config.TargetValidNameRE.MatchString(profile) {
+		return fmt.Errorf("invalid profile name: %q", profile)
 	}
 
-	(*s)[profile] = webhookURL
+	// Validate webhook url
+	url, err := config.ParseURL(webhookURL)
+	if err != nil {
+		return fmt.Errorf("invalid webhook url: %s", err)
+	}
+
+	targetURL := config.SecretURL(*url)
+	(*s)[profile] = &targetURL
 	return nil
 }
 
 func (s *dingTalkProfilesValue) Get() interface{} {
-	return (map[string]string)(*s)
+	return *s
 }
 
 func (s *dingTalkProfilesValue) String() string {
-	return fmt.Sprintf("%s", map[string]string(*s))
+	return fmt.Sprintf("%s", *s)
 }
 
 func (s *dingTalkProfilesValue) IsCumulative() bool {
