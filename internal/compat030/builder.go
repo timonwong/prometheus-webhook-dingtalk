@@ -21,7 +21,7 @@ func NewBuilder(a *kingpin.Application) *Builder {
 		b.isCompat = true
 		return nil
 	}
-	b.dingTalkProfiles = dingTalkProfiles(a.Flag("ding.profile", "").Action(action).Hidden())
+	b.dingTalkProfiles = asDingTalkProfiles(a.Flag("ding.profile", "").Action(action).Hidden())
 	b.requestTimeout = a.Flag("ding.timeout", "").Hidden().Action(action).Duration()
 	b.templateFile = a.Flag("template.file", "").Hidden().Action(action).String()
 	return b
@@ -43,14 +43,8 @@ func (b *Builder) BuildConfig() (*config.Config, error) {
 
 	conf.Targets = make(map[string]config.Target)
 	for name, targetURL := range *b.dingTalkProfiles {
-		url, err := config.ParseURL(targetURL)
-		if err != nil {
-			return nil, err
-		}
-
-		secretURL := config.SecretURL(*url)
 		targetConfig := config.DefaultTarget
-		targetConfig.URL = &secretURL
+		targetConfig.URL = targetURL
 		conf.Targets[name] = targetConfig
 	}
 
