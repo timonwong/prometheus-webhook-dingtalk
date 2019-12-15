@@ -6,18 +6,25 @@
 
 Generating [DingTalk] notification from [Prometheus] [AlertManager] WebHooks.
 
-## Building and running
+## Install
 
-### Build
+### Precompiled binaries
+
+Precompiled binaries for released versions are available in [release page](https://github.com/timonwong/prometheus-webhook-dingtalk/releases):
+It's always recommended to use latest stable version available.
+
+### Docker
+
+You can deploy this tool using the Docker image from following registry:
+
+* DockerHub: [timonwong/prometheus-webhook-dingtalk](https://hub.docker.com/r/timonwong/prometheus-webhook-dingtalk)
+
+### Compiling the binary
+
+Clone the repository and build manually:
 
 ```bash
-make
-```
-
-### Running
-
-```bash
-./prometheus-webhook-dingtalk <flags>
+make build
 ```
 
 ## Usage
@@ -79,12 +86,6 @@ targets:
     mention:
       mobiles: ['156xxxx8827', '189xxxx8325']
 ```
-
-## Using Docker
-
-You can deploy this tool using the Docker image from following registry:
-
-* DockerHub: [timonwong/prometheus-webhook-dingtalk](https://hub.docker.com/r/timonwong/prometheus-webhook-dingtalk)
 
 [Prometheus]: https://prometheus.io
 [AlertManager]: https://github.com/prometheus/alertmanager
