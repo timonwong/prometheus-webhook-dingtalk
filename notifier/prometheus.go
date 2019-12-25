@@ -13,7 +13,12 @@ import (
 )
 
 func BuildDingTalkNotification(promMessage *models.WebhookMessage) (*models.DingTalkNotification, error) {
-	promMessage.AlertTime = time.Now().Format("2006.01.02 15:04:05")
+	now := time.Now()
+	location, err := time.LoadLocation("Asia/Shanghai")
+	if err != nil {
+		fmt.Println(err)
+	}
+	promMessage.AlertTime = now.In(location).Format("2006-01-02 15:04:05 -0700")
 	title, err := template.ExecuteTextString(`{{ template "ding.link.title" . }}`, promMessage)
 	if err != nil {
 		return nil, err
