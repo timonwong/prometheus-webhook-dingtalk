@@ -58,6 +58,7 @@ func (r *DingNotificationBuilder) renderText(data interface{}) (string, error) {
 }
 
 func (r *DingNotificationBuilder) Build(m *models.WebhookMessage) (*models.DingTalkNotification, error) {
+	m.AlertTime = time.Now().Format("2006.01.02 15:04:05")
 	title, err := r.renderTitle(m)
 	if err != nil {
 		return nil, err
@@ -68,10 +69,10 @@ func (r *DingNotificationBuilder) Build(m *models.WebhookMessage) (*models.DingT
 	}
 
 	notification := &models.DingTalkNotification{
-		MessageType: "markdown",
-		Markdown: &models.DingTalkNotificationMarkdown{
-			Title: title,
-			Text:  content,
+		MessageType: "text",
+		Text: &models.DingTalkNotificationText{
+			Title:   title,
+			Content: content,
 		},
 	}
 

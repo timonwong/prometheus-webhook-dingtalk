@@ -112,6 +112,7 @@ type Data struct {
 	CommonAnnotations KV `json:"commonAnnotations"`
 
 	ExternalURL string `json:"externalURL"`
+	AlertTime   string `json:"alertTime"`
 }
 
 // Alert holds one alert for notification templates.

@@ -26,6 +26,8 @@
 {{/* Default */}}
 {{ define "default.title" }}{{ template "__subject" . }}{{ end }}
 {{ define "default.content" }}#### \[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}\] **[{{ index .GroupLabels "alertname" }}]({{ template "__alertmanagerURL" . }})**
+Alerttime: {{ .AlertTime }}
+
 {{ if gt (len .Alerts.Firing) 0 -}}
 **Alerts Firing**
 {{ template "default.__text_alert_list" .Alerts.Firing }}
