@@ -69,10 +69,10 @@ func (r *DingNotificationBuilder) Build(m *models.WebhookMessage) (*models.DingT
 	}
 
 	notification := &models.DingTalkNotification{
-		MessageType: "text",
-		Text: &models.DingTalkNotificationText{
-			Title:   title,
-			Content: content,
+		MessageType: "markdown",
+		Markdown: &models.DingTalkNotificationMarkdown{
+			Title: title,
+			Text:  content,
 		},
 	}
 
