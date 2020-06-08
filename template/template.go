@@ -32,20 +32,26 @@ func FromGlobs(paths ...string) (*Template, error) {
 	t := &Template{
 		tmpl: template.New("").Option("missingkey=zero"),
 	}
-	var err error
+
 	t.tmpl = t.tmpl.Funcs(defaultFuncs).Funcs(sprig.TxtFuncMap())
 
-	f, err := Assets.Open("/templates/default.tmpl")
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-	b, err := ioutil.ReadAll(f)
-	if err != nil {
-		return nil, err
-	}
-	if t.tmpl, err = t.tmpl.Parse(string(b)); err != nil {
-		return nil, err
+	if len(paths) == 0 {
+		var err error
+
+		f, err := Assets.Open("/templates/default.tmpl")
+		if err != nil {
+			return nil, err
+		}
+
+		defer f.Close()
+		b, err := ioutil.ReadAll(f)
+		if err != nil {
+			return nil, err
+		}
+
+		if t.tmpl, err = t.tmpl.Parse(string(b)); err != nil {
+			return nil, err
+		}
 	}
 
 	for _, tp := range paths {
