@@ -28,16 +28,13 @@ type Template struct {
 
 // FromGlobs calls ParseGlob on all path globs provided and returns the
 // resulting tmpl.
-func FromGlobs(paths ...string) (*Template, error) {
-	t := &Template{
-		tmpl: template.New("").Option("missingkey=zero"),
-	}
+func FromGlobs(loadBuiltinTemplate bool, paths ...string) (*Template, error) {
+	tmpl := template.New("").
+		Option("missingkey=zero").
+		Funcs(defaultFuncs).
+		Funcs(sprig.TxtFuncMap())
 
-	t.tmpl = t.tmpl.Funcs(defaultFuncs).Funcs(sprig.TxtFuncMap())
-
-	if len(paths) == 0 {
-		var err error
-
+	if loadBuiltinTemplate {
 		f, err := Assets.Open("/templates/default.tmpl")
 		if err != nil {
 			return nil, err
@@ -49,7 +46,7 @@ func FromGlobs(paths ...string) (*Template, error) {
 			return nil, err
 		}
 
-		if t.tmpl, err = t.tmpl.Parse(string(b)); err != nil {
+		if _, err := tmpl.Parse(string(b)); err != nil {
 			return nil, err
 		}
 	}
@@ -62,12 +59,13 @@ func FromGlobs(paths ...string) (*Template, error) {
 			return nil, err
 		}
 		if len(p) > 0 {
-			if t.tmpl, err = t.tmpl.ParseGlob(tp); err != nil {
+			if _, err := tmpl.ParseGlob(tp); err != nil {
 				return nil, err
 			}
 		}
 	}
-	return t, nil
+
+	return &Template{tmpl: tmpl}, nil
 }
 
 func (t *Template) ExecuteTextString(text string, data interface{}) (string, error) {

@@ -42,11 +42,12 @@ func LoadFile(filename string) (*Config, error) {
 }
 
 type Config struct {
-	Template       string            `yaml:"template,omitempty"`
-	Templates      []string          `yaml:"templates,omitempty"`
-	DefaultMessage *TargetMessage    `yaml:"default_message,omitempty"`
-	Timeout        time.Duration     `yaml:"timeout"`
-	Targets        map[string]Target `yaml:"targets"`
+	NoBuiltinTemplate bool              `yaml:"no_builtin_template"`
+	Template          string            `yaml:"template,omitempty"`
+	Templates         []string          `yaml:"templates,omitempty"`
+	DefaultMessage    *TargetMessage    `yaml:"default_message,omitempty"`
+	Timeout           time.Duration     `yaml:"timeout"`
+	Targets           map[string]Target `yaml:"targets"`
 }
 
 func (c *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {

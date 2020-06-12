@@ -115,7 +115,7 @@ func run() int {
 	configCoordinator.Subscribe(func(conf *config.Config) error {
 		// Parse templates
 		level.Info(configLogger).Log("msg", "Loading templates", "templates", strings.Join(conf.Templates, ";"))
-		tmpl, err := template.FromGlobs(conf.Templates...)
+		tmpl, err := template.FromGlobs(!conf.NoBuiltinTemplate, conf.Templates...)
 		if err != nil {
 			return errors.Wrap(err, "failed to parse templates")
 		}
