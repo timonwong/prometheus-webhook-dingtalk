@@ -35,3 +35,12 @@ templates:
   # Docker 的话可以直接这样写
   - /etc/prometheus-webhook-dingtalk/templates/legacy/template.tmpl
 ```
+
+### 能不能不重启就重新加载配置文件
+
+可以，两个方法:
+1. 发送 SIGHUP 信号量: `kill -HUP <pid>`
+2. 启动的时候加入 `--web.enable-lifecycle` 参数，然后通过 `HTTP PUT` 或 `HTTP POST` 方法访问 `/-/reload` 即可，例:
+   ```bash
+   curl -XPOST http://localhost:8060/-/reload
+   ```
