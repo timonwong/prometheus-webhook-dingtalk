@@ -22,6 +22,7 @@ var (
 	defaultFuncs = map[string]interface{}{
 		"toUpper":  strings.ToUpper,
 		"toLower":  strings.ToLower,
+		"title": strings.Title,
 		"markdown": markdownEscapeString,
 	}
 	isMarkdownSpecial [128]bool
