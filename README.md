@@ -52,6 +52,8 @@ Flags:
       --version                 Show application version.
 ```
 
+For Kubernetes users, check out [./contrib/k8s](./contrib/k8s).
+
 ## Configuration
 
 常见问题可以看看 [FAQ](./docs/FAQ_zh.md)
