@@ -186,7 +186,7 @@ const Playground: FC<RouteComponentProps> = () => {
                     className="text-monospace"
                     style={{ height: '500px' }}
                     value={inputs.text}
-                    onChange={evt => setInputs({ ...inputs, ...{ text: evt.target.value } })}
+                    onChange={(evt) => setInputs({ ...inputs, ...{ text: evt.target.value } })}
                   />
                 </FormGroup>
               </Form>
@@ -200,7 +200,7 @@ const Playground: FC<RouteComponentProps> = () => {
                     className="text-monospace"
                     style={{ height: '500px' }}
                     value={inputs.demoAlertJSON}
-                    onChange={evt => setInputs({ ...inputs, ...{ demoAlertJSON: evt.target.value } })}
+                    onChange={(evt) => setInputs({ ...inputs, ...{ demoAlertJSON: evt.target.value } })}
                   />
                 </FormGroup>
               </Form>
@@ -238,14 +238,7 @@ const Playground: FC<RouteComponentProps> = () => {
                   <div className="preview">
                     <div className="clearfix preview-content-area">
                       <div className="message-bubble">
-                        <ReactMarkdown
-                          source={markdown}
-                          className={'markdown-content'}
-                          parserOptions={{
-                            gfm: false,
-                            commonmark: true,
-                          }}
-                        />
+                        <ReactMarkdown children={markdown} className={'markdown-content'} />
                       </div>
                     </div>
                   </div>
