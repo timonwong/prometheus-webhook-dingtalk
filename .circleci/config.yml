@@ -1,8 +1,8 @@
 version: 2.1
 
 orbs:
-  prometheus: prometheus/prometheus@0.3.0
-  go: circleci/go@0.2.0
+  prometheus: prometheus/prometheus@0.11.0
+  go: circleci/go@1.7.0
 
 executors:
   # Whenever the Go version is updated here, .promu.yml
@@ -10,109 +10,6 @@ executors:
   golang:
     docker:
       - image: circleci/golang:1.16-node
-
-commands:
-  publish_images:
-    description: >
-      Build and publish images to a container image registry.
-    parameters:
-      registry:
-        description: Registry address
-        type: string
-      organization:
-        description: Registry organization
-        type: string
-      login_variable:
-        description: Environment variable holding the registry login
-        type: env_var_name
-      password_variable:
-        description: Environment variable holding the registry password
-        type: env_var_name
-      dockerfile_path:
-        description: Path to Dockerfile
-        type: string
-        default: ""
-      container_image_name:
-        description: Name of the container image
-        type: string
-        default: ""
-      enable_docker_manifest:
-        description: Enable docker manifests (quay not supported right now)
-        type: boolean
-        default: true
-
-    steps:
-      - when:
-          condition: << parameters.dockerfile_path >>
-          steps:
-            - run: echo "export DOCKERFILE_PATH=<< parameters.dockerfile_path >>" >> $BASH_ENV
-      - when:
-          condition: << parameters.container_image_name >>
-          steps:
-            - run: echo "export DOCKER_IMAGE_NAME=<< parameters.container_image_name >>" >> $BASH_ENV
-      - run: make docker DOCKER_REPO=<< parameters.registry >>/<< parameters.organization >>
-      - run: docker images
-      - run: docker login -u $<< parameters.login_variable >> -p $<< parameters.password_variable >> << parameters.registry >>
-      - run: make docker-publish DOCKER_REPO=<< parameters.registry >>/<< parameters.organization >>
-      - when:
-          condition: << parameters.enable_docker_manifest >>
-          steps:
-            - run: make docker-manifest DOCKER_REPO=<< parameters.registry >>/<< parameters.organization >>
-
-  publish_release_images:
-    description: >
-      Build and publish release images to a container image registry.
-    parameters:
-      registry:
-        description: Registry address
-        type: string
-      organization:
-        description: Registry organization
-        type: string
-      login_variable:
-        description: Environment variable holding the registry login
-        type: env_var_name
-      password_variable:
-        description: Environment variable holding the registry password
-        type: env_var_name
-      dockerfile_path:
-        description: Path to Dockerfile
-        type: string
-        default: ""
-      container_image_name:
-        description: Name of the container image
-        type: string
-        default: ""
-      enable_docker_manifest:
-        description: Enable docker manifests (quay not supported right now)
-        type: boolean
-        default: true
-
-    steps:
-      - when:
-          condition: << parameters.dockerfile_path >>
-          steps:
-            - run: echo "export DOCKERFILE_PATH=<< parameters.dockerfile_path >>" >> $BASH_ENV
-      - when:
-          condition: << parameters.container_image_name >>
-          steps:
-            - run: echo "export DOCKER_IMAGE_NAME=<< parameters.container_image_name >>" >> $BASH_ENV
-      - run: make docker DOCKER_IMAGE_TAG="$CIRCLE_TAG" DOCKER_REPO=<< parameters.registry >>/<< parameters.organization >>
-      - run: docker images
-      - run: docker login -u $<< parameters.login_variable >> -p $<< parameters.password_variable >> << parameters.registry >>
-      - run: make docker-publish DOCKER_IMAGE_TAG="$CIRCLE_TAG" DOCKER_REPO=<< parameters.registry >>/<< parameters.organization >>
-      - when:
-          condition: << parameters.enable_docker_manifest >>
-          steps:
-            - run: make docker-manifest DOCKER_IMAGE_TAG="$CIRCLE_TAG" DOCKER_REPO=<< parameters.registry >>/<< parameters.organization >>
-      - run: |
-          if [[ "$CIRCLE_TAG" =~ ^v[0-9]+(\.[0-9]+){2}$ ]]; then
-            make docker-tag-latest DOCKER_IMAGE_TAG="$CIRCLE_TAG" DOCKER_REPO=<< parameters.registry >>/<< parameters.organization >>
-            make docker-publish DOCKER_IMAGE_TAG="latest" DOCKER_REPO=<< parameters.registry >>/<< parameters.organization >>
-            <<# parameters.enable_docker_manifest >>
-            make docker-manifest DOCKER_IMAGE_TAG="latest" DOCKER_REPO=<< parameters.registry >>/<< parameters.organization >>
-            <</ parameters.enable_docker_manifest >>
-          fi
 
 jobs:
   test:
@@ -126,7 +23,16 @@ jobs:
           keys:
             - v1-npm-deps-{{ checksum "web/ui/react-app/yarn.lock" }}
             - v1-npm-deps-
-      - run: make
+      - run:
+          command: make
+          environment:
+            # By default, Go uses GOMAXPROCS but a Circle CI executor has many
+            # cores (> 30) while the CPU and RAM resources are throttled. If we
+            # don't limit this to the number of allocated cores, the job is
+            # likely to get OOMed and killed.
+            GOOPTS: "-p 2"
+            GOMAXPROCS: "2"
+            GO111MODULE: "on"
       - prometheus/store_artifact:
           file: prometheus-webhook-dingtalk
       - go/save-cache:
@@ -152,45 +58,6 @@ jobs:
           path: .build
           destination: /build
 
-  publish_master:
-    description: >
-      Build and publish container images from the master branch.
-    docker:
-      - image: circleci/golang
-    steps:
-      - prometheus/setup_build_environment
-      - publish_images:
-          registry: docker.io
-          organization: timonwong
-          login_variable: DOCKER_LOGIN
-          password_variable: DOCKER_PASSWORD
-
-  publish_release:
-    description: >
-      Build and publish binaries and container images for a given release tag.
-    parameters:
-      image:
-        type: string
-        description: Custom container image.
-        default: circleci/golang
-
-    docker:
-      - image: << parameters.image >>
-
-    steps:
-      - prometheus/setup_build_environment
-      - run: promu crossbuild tarballs
-      - run: promu checksum .tarballs
-      - run: promu release .tarballs
-      - store_artifacts:
-          path: .tarballs
-          destination: releases
-      - publish_release_images:
-          registry: docker.io
-          organization: timonwong
-          login_variable: DOCKER_LOGIN
-          password_variable: DOCKER_PASSWORD
-
 workflows:
   version: 2
   prometheus-webhook-dingtalk:
@@ -204,7 +71,7 @@ workflows:
           filters:
             tags:
               only: /.*/
-      - publish_master:
+      - prometheus/publish_master:
           context: timonwong-context
           requires:
             - test
@@ -212,7 +79,10 @@ workflows:
           filters:
             branches:
               only: master
-      - publish_release:
+          image: circleci/golang:1-node
+          quay_io_organization: ''
+          docker_hub_organization: timonwong
+      - prometheus/publish_release:
           context: timonwong-context
           requires:
             - test
@@ -222,3 +92,6 @@ workflows:
               only: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
             branches:
               ignore: /.*/
+          image: circleci/golang:1-node
+          quay_io_organization: ''
+          docker_hub_organization: timonwong

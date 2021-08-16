@@ -1,6 +1,7 @@
 /.idea
 /.vscode
 /.build
+/vendor
 
 *.tar.gz
 coverage.txt
