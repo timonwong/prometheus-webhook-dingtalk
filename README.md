@@ -23,7 +23,7 @@ You can deploy this tool using the Docker image from following registry:
 
 #### Prerequisites
 
-1. [Go](https://golang.org/doc/install) (1.13 or greater is required)
+1. [Go](https://golang.org/doc/install) (1.16 or greater is required)
 2. [Nodejs](https://nodejs.org/)
 3. [Yarn](https://yarnpkg.com/)
 
