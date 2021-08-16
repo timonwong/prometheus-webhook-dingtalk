@@ -1,7 +1,7 @@
 repository:
   path: github.com/timonwong/prometheus-webhook-dingtalk
 go:
-  version: 1.13
+  version: 1.16
   cgo: false
 build:
   binaries:

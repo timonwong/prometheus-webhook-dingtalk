@@ -11,4 +11,4 @@ DIR="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
 # demoAlerts file: /web/ui/react-app/src/pages/PlaygroundDemoAlert.json
 demoAlerts=$(<$DIR/../web/ui/react-app/src/pages/PlaygroundDemoAlert.json)
 
-curl -XPOST -d"$demoAlerts" http://localhost:8060/dingtalk/webhook1/send
+curl -XPOST -d"$demoAlerts" http://localhost:8060/dingtalk/webhook-test/send
