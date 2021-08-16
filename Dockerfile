@@ -12,7 +12,7 @@ COPY contrib                                            /etc/prometheus-webhook-
 COPY template/default.tmpl                              /etc/prometheus-webhook-dingtalk/templates/default.tmpl
 
 RUN mkdir -p /prometheus-webhook-dingtalk && \
-    chown -R nobody:nogroup /etc/prometheus-webhook-dingtalk /prometheus-webhook-dingtalk
+    chown -R nobody:nobody /etc/prometheus-webhook-dingtalk /prometheus-webhook-dingtalk
 
 USER       nobody
 EXPOSE     8060
