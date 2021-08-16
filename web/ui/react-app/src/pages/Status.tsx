@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import React, { FC, Fragment } from 'react';
 import { RouteComponentProps } from '@reach/router';
 import { Table } from 'reactstrap';
