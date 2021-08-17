@@ -1,3 +1,13 @@
+## 2.0.0 / unreleased
+
+**BREAKING CHANGE**
+
+Legacy command line flags, `--ding.profile`, `--ding.timeout` and `--template.file` are removed
+and no longer can be used. Please use config file instead before upgrading.
+
+- [CHANGE] **BREAKING CHANGE** Remove legacy command line flags. #157
+- [MISC] Update react & go dependencies.
+
 ## 1.4.0 / 2019-12-11
 
 - [FEATURE/ENHANCEMENT] Allow override global default message template in config file. #76
