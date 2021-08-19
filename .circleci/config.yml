@@ -18,7 +18,7 @@ jobs:
     steps:
       - prometheus/setup_environment
       - go/load-cache:
-          key: v1-go-mod
+          key: v1
       - restore_cache:
           keys:
             - v2-npm-deps-{{ checksum "web/ui/react-app/yarn.lock" }}
@@ -36,7 +36,7 @@ jobs:
       - prometheus/store_artifact:
           file: prometheus-webhook-dingtalk
       - go/save-cache:
-          key: v1-go-mod
+          key: v1
       - save_cache:
           key: v2-npm-deps-{{ checksum "web/ui/react-app/yarn.lock" }}
           paths:
