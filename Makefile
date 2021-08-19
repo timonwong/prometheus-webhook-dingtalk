@@ -37,14 +37,6 @@ build: assets common-build
 
 .PHONY: assets
 assets: $(REACT_APP_OUTPUT_DIR)
-	@echo ">> writing assets"
-	# Un-setting GOOS and GOARCH here because the generated Go code is always the same,
-	# but the cached object code is incompatible between architectures and OSes (which
-	# breaks cross-building for different combinations on CI in the same container).
-	GO111MODULE=$(GO111MODULE) GOOS= GOARCH=  $(GO) generate $(GOOPTS) ./template
-	GO111MODULE=$(GO111MODULE) GOOS= GOARCH=  $(GO) generate $(GOOPTS) ./web/ui
-	@$(GOFMT) -w ./template
-	@$(GOFMT) -w ./web/ui
 
 .PHONY: react-app-lint
 react-app-lint:
