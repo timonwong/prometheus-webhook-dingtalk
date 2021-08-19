@@ -7,4 +7,4 @@ io.WriteString
 (*net/http.Server).Shutdown
 
 // Never check for logger errors.
-(github.com/go-kit/kit/log.Logger).Log
+(github.com/go-kit/log.Logger).Log

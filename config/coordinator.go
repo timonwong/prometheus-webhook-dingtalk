@@ -16,8 +16,8 @@ package config
 import (
 	"sync"
 
-	"github.com/go-kit/kit/log"
-	"github.com/go-kit/kit/log/level"
+	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 )
 
 // Coordinator coordinates configurations beyond the lifetime of a
