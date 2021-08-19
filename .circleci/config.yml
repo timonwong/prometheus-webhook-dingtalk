@@ -21,8 +21,8 @@ jobs:
           key: v1-go-mod
       - restore_cache:
           keys:
-            - v1-npm-deps-{{ checksum "web/ui/react-app/yarn.lock" }}
-            - v1-npm-deps-
+            - v2-npm-deps-{{ checksum "web/ui/react-app/yarn.lock" }}
+            - v2-npm-deps-
       - run:
           command: make
           environment:
@@ -38,25 +38,9 @@ jobs:
       - go/save-cache:
           key: v1-go-mod
       - save_cache:
-          key: v1-npm-deps-{{ checksum "web/ui/react-app/yarn.lock" }}
+          key: v2-npm-deps-{{ checksum "web/ui/react-app/yarn.lock" }}
           paths:
             - web/ui/react-app/node_modules
-  build:
-    description: >
-      Cross-build and store the binaries.
-    machine:
-      enabled: true
-
-    steps:
-      - prometheus/setup_environment
-      - run: promu crossbuild -v
-      - persist_to_workspace:
-          root: .
-          paths:
-            - .build
-      - store_artifacts:
-          path: .build
-          destination: /build
 
 workflows:
   version: 2
@@ -66,11 +50,12 @@ workflows:
           filters:
             tags:
               only: /.*/
-      - build:
+      - prometheus/build:
           name: build
+          parallelism: 2
           filters:
             tags:
-              only: /.*/
+              only: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
       - prometheus/publish_master:
           context: timonwong-context
           requires:
