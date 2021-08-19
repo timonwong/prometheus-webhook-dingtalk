@@ -134,7 +134,7 @@ func run() int {
 	}()
 
 	var (
-		reloadReady = make(chan bool)
+		reloadReady = make(chan struct{})
 		hup         = make(chan os.Signal, 1)
 		term        = make(chan os.Signal, 1)
 	)
