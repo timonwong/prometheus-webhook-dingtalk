@@ -7,7 +7,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"strconv"
 	"time"
@@ -119,7 +118,7 @@ func SendNotification(notification *models.DingTalkNotification, httpClient *htt
 		return nil, errors.Wrap(err, "error sending notification to DingTalk")
 	}
 	defer func() {
-		io.Copy(ioutil.Discard, resp.Body)
+		io.Copy(io.Discard, resp.Body)
 		resp.Body.Close()
 	}()
 

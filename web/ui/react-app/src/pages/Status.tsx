@@ -9,7 +9,12 @@ import { useFetch } from '../utils/useFetch';
 const sectionTitles = ['Runtime Information', 'Build Information'];
 
 interface StatusConfig {
-  [k: string]: { title?: string; customizeValue?: (v: any, key: string) => any; customRow?: boolean; skip?: boolean };
+  [k: string]: {
+    title?: string;
+    customizeValue?: (v: any, key: string) => string;
+    customRow?: boolean;
+    skip?: boolean;
+  };
 }
 
 type StatusPageState = { [k: string]: string };
@@ -19,7 +24,10 @@ interface StatusPageProps {
 }
 
 export const statusConfig: StatusConfig = {
-  startTime: { title: 'Start time', customizeValue: (v: string) => new Date(v).toUTCString() },
+  startTime: {
+    title: 'Start time',
+    customizeValue: (v: string, _: string) => new Date(v).toUTCString(),
+  },
   CWD: { title: 'Working directory' },
   reloadConfigSuccess: {
     title: 'Configuration reload',

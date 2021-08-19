@@ -15,7 +15,7 @@ package template
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"path/filepath"
 	"text/template"
 
@@ -41,7 +41,7 @@ func FromGlobs(loadBuiltinTemplate bool, paths ...string) (*Template, error) {
 		}
 
 		defer f.Close()
-		b, err := ioutil.ReadAll(f)
+		b, err := io.ReadAll(f)
 		if err != nil {
 			return nil, err
 		}
