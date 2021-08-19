@@ -1,4 +1,4 @@
-## 2.0.0 / unreleased
+## 2.0.0 / 2021-08-19
 
 **BREAKING CHANGE**
 
@@ -6,6 +6,7 @@ Legacy command line flags, `--ding.profile`, `--ding.timeout` and `--template.fi
 and no longer can be used. Please use config file instead before upgrading.
 
 - [CHANGE] **BREAKING CHANGE** Remove legacy command line flags. #157
+- [BUILD] Add arm builds for windows and macOS.
 - [MISC] Update react & go dependencies.
 
 ## 1.4.0 / 2019-12-11
