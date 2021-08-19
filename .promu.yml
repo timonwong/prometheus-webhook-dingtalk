@@ -21,9 +21,8 @@ tarball:
     - config.example.yml
 crossbuild:
   platforms:
-    - darwin/amd64
-    - windows/amd64
-    - windows/386
+    - darwin
+    - windows
     - linux/amd64
     - linux/arm
     - linux/arm64
