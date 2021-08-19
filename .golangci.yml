@@ -5,8 +5,17 @@ issues:
   exclude-rules:
     - path: _test.go
       linters:
+        - depguard
         - errcheck
 
 linters-settings:
+  depguard:
+    list-type: blacklist
+    include-go-root: true
+    packages:
+      - sync/atomic
+    packages-with-error-message:
+      - sync/atomic: "Use go.uber.org/atomic instead of sync/atomic"
+      - github.com/go-kit/kit/log: "Use github.com/go-kit/log instead of github.com/go-kit/kit/log"
   errcheck:
     exclude: scripts/errcheck_excludes.txt
