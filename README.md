@@ -19,13 +19,12 @@ You can deploy this tool using the Docker image from following registry:
 
 * DockerHub: [timonwong/prometheus-webhook-dingtalk](https://hub.docker.com/r/timonwong/prometheus-webhook-dingtalk)
 
-### Compiling the binary
+### Building from Source
 
 #### Prerequisites
 
-1. [Go](https://golang.org/doc/install) (1.16 or greater is required)
+1. [Go](https://golang.org/doc/install) (1.17 or greater is required)
 2. [Nodejs](https://nodejs.org/)
-3. [Yarn](https://yarnpkg.com/)
 
 #### Build
 
@@ -33,6 +32,16 @@ Clone the repository and build manually:
 
 ```bash
 make build
+```
+
+### Building the Docker Image
+
+In order to build the docker image locally (linux/amd64), you can use the following commands:
+
+```bash
+make promu
+promu crossbuild -p linux/amd64   #  Or $(go env GOPATH)/bin/promu crossbuild -p linux/amd64
+make common-docker-amd64
 ```
 
 ## Usage
