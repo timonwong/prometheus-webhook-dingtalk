@@ -1,3 +1,4 @@
+//go:build builtinassets
 // +build builtinassets
 
 package ui

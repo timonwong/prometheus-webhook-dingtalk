@@ -9,7 +9,7 @@ executors:
   # should also be updated.
   golang:
     docker:
-      - image: circleci/golang:1.16-node
+      - image: circleci/golang:1.17-node
 
 jobs:
   test:
@@ -20,7 +20,7 @@ jobs:
       - go/load-cache
       - restore_cache:
           keys:
-            - v2-npm-deps-{{ checksum "web/ui/react-app/yarn.lock" }}
+            - v2-npm-deps-{{ checksum "web/ui/react-app/package-lock.json" }}
             - v2-npm-deps-
       - run:
           command: make
@@ -37,9 +37,9 @@ jobs:
       - go/save-cache:
           path: /go/pkg/mod
       - save_cache:
-          key: v2-npm-deps-{{ checksum "web/ui/react-app/yarn.lock" }}
+          key: v2-npm-deps-{{ checksum "web/ui/react-app/package-lock.json" }}
           paths:
-            - web/ui/react-app/node_modules
+            - ~/.npm
 
 workflows:
   version: 2
