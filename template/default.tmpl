@@ -29,10 +29,12 @@
 {{ if gt (len .Alerts.Firing) 0 -}}
 **Alerts Firing**
 {{ template "default.__text_alert_list" .Alerts.Firing }}
+{{ range .AtMobiles }}@{{ . }}{{ end }}
 {{- end }}
 {{ if gt (len .Alerts.Resolved) 0 -}}
 **Alerts Resolved**
 {{ template "default.__text_alert_list" .Alerts.Resolved }}
+{{ range .AtMobiles }}@{{ . }}{{ end }}
 {{- end }}
 {{- end }}
 
