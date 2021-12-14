@@ -57,6 +57,10 @@ func (r *DingNotificationBuilder) renderText(data interface{}) (string, error) {
 }
 
 func (r *DingNotificationBuilder) Build(m *models.WebhookMessage) (*models.DingTalkNotification, error) {
+	if r.target.Mention != nil {
+		m.AtMobiles = append(m.AtMobiles, r.target.Mention.Mobiles...)
+	}
+
 	title, err := r.renderTitle(m)
 	if err != nil {
 		return nil, err
