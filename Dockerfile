@@ -1,5 +1,5 @@
-ARG ARCH="amd64"
-FROM gcr.io/distroless/static:debug-${ARCH} as etc
+ARG IMAGE_ARCH="amd64"
+FROM gcr.io/distroless/static:debug-${IMAGE_ARCH} as etc
 
 COPY config.example.yml                 /etc/prometheus-webhook-dingtalk/config.yml
 COPY contrib                            /etc/prometheus-webhook-dingtalk/
@@ -8,8 +8,8 @@ COPY template/default.tmpl              /etc/prometheus-webhook-dingtalk/templat
 RUN ["/busybox/sh", "-c", "mkdir -p /prometheus-webhook-dingtalk"]
 RUN ["/busybox/sh", "-c", "chown -R nobody:nobody /etc/prometheus-webhook-dingtalk /prometheus-webhook-dingtalk"]
 
-ARG ARCH="amd64"
-FROM gcr.io/distroless/static:nonroot-${ARCH}
+ARG IMAGE_ARCH="amd64"
+FROM gcr.io/distroless/static:nonroot-${IMAGE_ARCH}
 LABEL maintainer="Timon Wong <timon86.wang@gmail.com>"
 
 ARG ARCH="amd64"
