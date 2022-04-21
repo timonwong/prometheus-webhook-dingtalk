@@ -11,7 +11,6 @@ import (
 
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
-	"github.com/pkg/errors"
 	"github.com/prometheus/common/promlog"
 	"github.com/prometheus/common/promlog/flag"
 	"github.com/prometheus/common/version"
@@ -98,7 +97,7 @@ func run() int {
 		level.Info(configLogger).Log("msg", "Loading templates", "templates", strings.Join(conf.Templates, ";"))
 		tmpl, err := template.FromGlobs(!conf.NoBuiltinTemplate, conf.Templates...)
 		if err != nil {
-			return errors.Wrap(err, "failed to parse templates")
+			return fmt.Errorf("failed to parse templates: %w", err)
 		}
 
 		// Print current targets configuration
