@@ -16,7 +16,7 @@ func (l *KitLogger) NewLogEntry(r *http.Request) middleware.LogEntry {
 	entry := &KitLogEntry{Logger: l.Logger}
 
 	logFields := make([]interface{}, 0, 16)
-	//logFields = append(logFields, "ts", time.Now().UTC().Format(time.RFC3339Nano))
+	// logFields = append(logFields, "ts", time.Now().UTC().Format(time.RFC3339Nano))
 	if reqID := middleware.GetReqID(r.Context()); reqID != "" {
 		logFields = append(logFields, "req_id", reqID)
 	}

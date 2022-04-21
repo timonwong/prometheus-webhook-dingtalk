@@ -26,13 +26,13 @@ import (
 	"runtime"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"github.com/go-chi/chi"
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 	"github.com/prometheus/common/server"
+	"go.uber.org/atomic"
 
 	"github.com/timonwong/prometheus-webhook-dingtalk/config"
 	"github.com/timonwong/prometheus-webhook-dingtalk/template"
@@ -41,16 +41,14 @@ import (
 	"github.com/timonwong/prometheus-webhook-dingtalk/web/ui"
 )
 
-var (
-	// Paths that are handled by the React / Reach router that should all be served the main React app's index.html.
-	reactRouterPaths = []string{
-		"/",
-		"/playground",
-		"/config",
-		"/flags",
-		"/status",
-	}
-)
+// Paths that are handled by the React / Reach router that should all be served the main React app's index.html.
+var reactRouterPaths = []string{
+	"/",
+	"/playground",
+	"/config",
+	"/flags",
+	"/status",
+}
 
 // Options for the web Handler.
 type Options struct {
@@ -79,7 +77,7 @@ type Handler struct {
 	birth       time.Time
 	cwd         string
 
-	ready uint32 // ready is uint32 rather than boolean to be able to use atomic functions.
+	ready atomic.Bool // ready is uint32 rather than boolean to be able to use atomic functions.
 }
 
 func New(logger log.Logger, o *Options) *Handler {
@@ -251,13 +249,12 @@ func (h *Handler) reload(w http.ResponseWriter, r *http.Request) {
 
 // Ready sets Handler to be ready.
 func (h *Handler) Ready() {
-	atomic.StoreUint32(&h.ready, 1)
+	h.ready.Store(true)
 }
 
 // Verifies whether the server is ready or not.
 func (h *Handler) isReady() bool {
-	ready := atomic.LoadUint32(&h.ready)
-	return ready > 0
+	return h.ready.Load()
 }
 
 // Checks if server is ready, calls f if it is, returns 503 if it is not.
