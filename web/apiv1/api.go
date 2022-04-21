@@ -43,8 +43,8 @@ func NewAPI(logger log.Logger,
 	tmpl func() *template.Template,
 	flagsMap map[string]string,
 	versionInfo *VersionInfo,
-	runtimeInfo func() (*RuntimeInfo, error)) *API {
-
+	runtimeInfo func() (*RuntimeInfo, error),
+) *API {
 	return &API{
 		logger:      logger,
 		config:      config,
@@ -59,11 +59,12 @@ func (api *API) Routes() chi.Router {
 	wrap := func(f apiFunc) http.HandlerFunc {
 		hf := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			result := f(r)
-			if result.err != nil {
+			switch {
+			case result.err != nil:
 				api.respondError(w, result.err, result.data)
-			} else if result.data != nil {
+			case result.data != nil:
 				api.respond(w, result.data)
-			} else {
+			default:
 				w.WriteHeader(http.StatusNoContent)
 			}
 		})
@@ -212,8 +213,8 @@ func (api *API) serveConfig(r *http.Request) apiFuncResult {
 type RuntimeInfo struct {
 	StartTime time.Time `json:"startTime"`
 	CWD       string    `json:"CWD"`
-	//ReloadConfigSuccess bool      `json:"reloadConfigSuccess"`
-	//LastConfigTime      time.Time `json:"lastConfigTime"`
+	// ReloadConfigSuccess bool      `json:"reloadConfigSuccess"`
+	// LastConfigTime      time.Time `json:"lastConfigTime"`
 	GoroutineCount int    `json:"goroutineCount"`
 	GOMAXPROCS     int    `json:"GOMAXPROCS"`
 	GOGC           string `json:"GOGC"`
@@ -272,7 +273,6 @@ func (api *API) respondError(w http.ResponseWriter, apiErr *apiError, data inter
 		Error:     apiErr.err.Error(),
 		Data:      data,
 	})
-
 	if err != nil {
 		level.Error(api.logger).Log("msg", "error marshaling json response", "err", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
