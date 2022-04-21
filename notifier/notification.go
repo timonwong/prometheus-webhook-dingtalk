@@ -6,12 +6,11 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"strconv"
 	"time"
-
-	"github.com/pkg/errors"
 
 	"github.com/timonwong/prometheus-webhook-dingtalk/config"
 	"github.com/timonwong/prometheus-webhook-dingtalk/pkg/models"
@@ -108,18 +107,18 @@ func SendNotification(notification *models.DingTalkNotification, httpClient *htt
 
 	body, err := json.Marshal(&notification)
 	if err != nil {
-		return nil, errors.Wrap(err, "error encoding DingTalk request")
+		return nil, fmt.Errorf("error encoding DingTalk request: %w", err)
 	}
 
 	httpReq, err := http.NewRequest("POST", targetURL.String(), bytes.NewReader(body))
 	if err != nil {
-		return nil, errors.Wrap(err, "error building DingTalk request")
+		return nil, fmt.Errorf("error building DingTalk request: %w", err)
 	}
 	httpReq.Header.Set("Content-Type", "application/json")
 
 	resp, err := httpClient.Do(httpReq)
 	if err != nil {
-		return nil, errors.Wrap(err, "error sending notification to DingTalk")
+		return nil, fmt.Errorf("error sending notification to DingTalk: %w", err)
 	}
 	defer func() {
 		io.Copy(io.Discard, resp.Body)
@@ -127,13 +126,13 @@ func SendNotification(notification *models.DingTalkNotification, httpClient *htt
 	}()
 
 	if resp.StatusCode != 200 {
-		return nil, errors.Errorf("unacceptable response code %d", resp.StatusCode)
+		return nil, fmt.Errorf("unacceptable response code %d", resp.StatusCode)
 	}
 
 	var robotResp models.DingTalkNotificationResponse
 	enc := json.NewDecoder(resp.Body)
 	if err := enc.Decode(&robotResp); err != nil {
-		return nil, errors.Wrap(err, "error decoding response from DingTalk")
+		return nil, fmt.Errorf("error decoding response from DingTalk: %w", err)
 	}
 
 	return &robotResp, nil
