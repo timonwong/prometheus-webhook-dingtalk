@@ -13,6 +13,7 @@
 
 # Needs to be defined before including Makefile.common to auto-generate targets
 DOCKER_ARCHS ?= amd64 armv7 arm64
+DOCKER_REPO ?= timonwong
 
 REACT_APP_PATH = web/ui/react-app
 REACT_APP_SOURCE_FILES = $(wildcard $(REACT_APP_PATH)/public/* $(REACT_APP_PATH)/src/* $(REACT_APP_PATH)/tsconfig.json $(shell find $(REACT_APP_PATH)/src -type f -print))

@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/Masterminds/sprig/v3 v3.2.2
-	github.com/go-chi/chi v4.1.2+incompatible
+	github.com/go-chi/chi/v5 v5.0.7
 	github.com/go-kit/log v0.2.0
 	github.com/prometheus/common v0.34.0
 	github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749

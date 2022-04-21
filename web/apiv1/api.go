@@ -19,7 +19,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 
