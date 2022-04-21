@@ -245,6 +245,15 @@ common-docker: $(BUILD_DOCKER_ARCHS)
 $(BUILD_DOCKER_ARCHS): common-docker-%:
 	docker build -t "$(DOCKER_REPO)/$(DOCKER_IMAGE_NAME)-linux-$*:$(DOCKER_IMAGE_TAG)" \
 		-f $(DOCKERFILE_PATH) \
+		--build-arg IMAGE_ARCH="$*" \
+		--build-arg ARCH="$*" \
+		--build-arg OS="linux" \
+		$(DOCKERBUILD_CONTEXT)
+
+common-docker-armv7: common-docker-%:
+	docker build -t "$(DOCKER_REPO)/$(DOCKER_IMAGE_NAME)-linux-armv7:$(DOCKER_IMAGE_TAG)" \
+		-f $(DOCKERFILE_PATH) \
+		--build-arg IMAGE_ARCH="arm" \
 		--build-arg ARCH="$*" \
 		--build-arg OS="linux" \
 		$(DOCKERBUILD_CONTEXT)
