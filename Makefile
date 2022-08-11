@@ -55,8 +55,13 @@ react-app-test: | $(REACT_APP_NODE_MODULES_PATH) react-app-lint
 	cd $(REACT_APP_PATH) && npm run test --no-watch --coverage
 
 .PHONY: test
-#test: common-test react-app-test
+# If we only want to only test go code we have to change the test target
+# which is called by all.
+ifeq ($(GO_ONLY),1)
 test: common-test
+else
+test: common-test react-app-test
+endif
 
 .PHONY: clean
 clean:

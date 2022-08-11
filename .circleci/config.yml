@@ -12,18 +12,14 @@ executors:
       - image: cimg/go:1.18-node
 
 jobs:
-  test:
+  test_go:
     executor: golang
 
     steps:
       - prometheus/setup_environment
       - go/load-cache
-      - restore_cache:
-          keys:
-            - v2-npm-deps-{{ checksum "web/ui/react-app/package-lock.json" }}
-            - v2-npm-deps-
       - run:
-          command: make
+          command: make GO_ONLY=1
           environment:
             # By default, Go uses GOMAXPROCS but a Circle CI executor has many
             # cores (> 30) while the CPU and RAM resources are throttled. If we
@@ -36,6 +32,17 @@ jobs:
           file: prometheus-webhook-dingtalk
       - go/save-cache:
           path: /go/pkg/mod
+
+  test_react:
+    executor: golang
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v2-npm-deps-{{ checksum "web/ui/react-app/package-lock.json" }}
+            - v2-npm-deps-
+      - run:
+          command: make react-app-test
       - save_cache:
           key: v2-npm-deps-{{ checksum "web/ui/react-app/package-lock.json" }}
           paths:
@@ -45,7 +52,11 @@ workflows:
   version: 2
   prometheus-webhook-dingtalk:
     jobs:
-      - test:
+      - test_go:
+          filters:
+            tags:
+              only: /.*/
+      - test_react:
           filters:
             tags:
               only: /.*/
@@ -58,7 +69,8 @@ workflows:
       - prometheus/publish_main:
           context: timonwong-context
           requires:
-            - test
+            - test_go
+            - test_react
             - build
           filters:
             branches:
@@ -69,7 +81,8 @@ workflows:
       - prometheus/publish_release:
           context: timonwong-context
           requires:
-            - test
+            - test_go
+            - test_react
             - build
           filters:
             tags:
