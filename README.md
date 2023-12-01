@@ -58,6 +58,10 @@ Flags:
       --config.file=config.yml  Path to the configuration file.
       --log.level=info          Only log messages with the given severity or above. One of: [debug, info, warn, error]
       --log.format=logfmt       Output format of log messages. One of: [logfmt, json]
+      --pushmetrics.extraLabel  extraLabel for push metrics. see: https://github.com/VictoriaMetrics/metrics
+      --pushmetrics.interval=15s interval for push metrics.
+      --pushmetrics.url         urls for push metrics.eg: http://host.docker.internal:8480/insert/0/prometheus/api/v1/import/prometheus.
+      --maxalertcount=30        max alert count to send to ding talk.
       --version                 Show application version.
 ```
 
