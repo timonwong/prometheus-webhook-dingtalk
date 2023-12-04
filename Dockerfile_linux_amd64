@@ -1,0 +1,3 @@
+FROM alpine:3.16
+ADD build/dingtalk-webhook-linux-amd64 /dingtalk-webhook-linux-amd64
+ENTRYPOINT [ "/dingtalk-webhook-linux-amd64"]

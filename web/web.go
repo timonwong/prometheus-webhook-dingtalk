@@ -34,6 +34,7 @@ import (
 	"github.com/prometheus/common/server"
 	"go.uber.org/atomic"
 
+	"github.com/VictoriaMetrics/metrics"
 	"github.com/timonwong/prometheus-webhook-dingtalk/config"
 	"github.com/timonwong/prometheus-webhook-dingtalk/template"
 	"github.com/timonwong/prometheus-webhook-dingtalk/web/apiv1"
@@ -57,6 +58,7 @@ type Options struct {
 	EnableLifecycle bool
 	Version         *VersionInfo
 	Flags           map[string]string
+	MaxAlertCount   uint16
 }
 
 type VersionInfo = apiv1.VersionInfo
@@ -120,6 +122,7 @@ func New(logger log.Logger, o *Options) *Handler {
 		h.runtimeInfo,
 	)
 	h.dingTalk = dingtalk.NewAPI(logger)
+	h.dingTalk.MaxAlertCount = o.MaxAlertCount
 
 	router.Mount("/dingtalk", h.dingTalk.Routes())
 
@@ -189,6 +192,9 @@ func New(logger log.Logger, o *Options) *Handler {
 		})
 	}
 
+	router.Get("/metrics", func(w http.ResponseWriter, r *http.Request) {
+		metrics.WritePrometheus(w, true)
+	})
 	return h
 }
 

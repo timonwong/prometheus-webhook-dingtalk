@@ -2,6 +2,7 @@ package dingtalk
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"sync"
@@ -11,6 +12,7 @@ import (
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
 
+	"github.com/VictoriaMetrics/metrics"
 	"github.com/timonwong/prometheus-webhook-dingtalk/config"
 	"github.com/timonwong/prometheus-webhook-dingtalk/notifier"
 	"github.com/timonwong/prometheus-webhook-dingtalk/pkg/chilog"
@@ -27,6 +29,8 @@ type API struct {
 	targets    map[string]config.Target
 	httpClient *http.Client
 	logger     log.Logger
+
+	MaxAlertCount uint16 // to avoid too many alert
 }
 
 func NewAPI(logger log.Logger) *API {
@@ -60,6 +64,7 @@ func (api *API) Routes() chi.Router {
 }
 
 func (api *API) serveSend(w http.ResponseWriter, r *http.Request) {
+	metrics.GetOrCreateCounter("http_requests_total{path=\"" + r.RequestURI + "\"}").Inc()
 	api.mtx.RLock()
 	targets := api.targets
 	conf := api.conf
@@ -72,36 +77,60 @@ func (api *API) serveSend(w http.ResponseWriter, r *http.Request) {
 
 	target, ok := targets[targetName]
 	if !ok {
-		level.Warn(logger).Log("msg", "target not found")
+		const reason = "target not found"
+		level.Warn(logger).Log("msg", reason)
 		http.NotFound(w, r)
+		metrics.GetOrCreateCounter(
+			fmt.Sprintf(`http_requests_error{path="%s",reason="%s"}`, r.RequestURI, reason)).Inc()
 		return
 	}
 
 	var promMessage models.WebhookMessage
 	if err := json.NewDecoder(r.Body).Decode(&promMessage); err != nil {
-		level.Error(logger).Log("msg", "Cannot decode prometheus webhook JSON request", "err", err)
+		const reason = "Cannot decode prometheus webhook JSON request"
+		level.Error(logger).Log("msg", reason, "err", err)
 		http.Error(w, "Bad Request", http.StatusBadRequest)
+		metrics.GetOrCreateCounter(
+			fmt.Sprintf(`http_requests_error{path="%s",reason="%s"}`, r.RequestURI, reason)).Inc()
 		return
+	}
+
+	metrics.GetOrCreateCounter(
+		fmt.Sprintf(`alert_count{path="%s"}`, r.RequestURI)).Add(len(promMessage.Alerts))
+	if api.MaxAlertCount > 0 && len(promMessage.Alerts) > int(api.MaxAlertCount) {
+		metrics.GetOrCreateCounter(
+			fmt.Sprintf(`alert_drop_count{path="%s"}`, r.RequestURI)).Add(len(promMessage.Alerts) - int(api.MaxAlertCount))
+		promMessage.Alerts = promMessage.Alerts[:api.MaxAlertCount]
 	}
 
 	builder := notifier.NewDingNotificationBuilder(tmpl, conf, &target)
 	notification, err := builder.Build(&promMessage)
 	if err != nil {
-		level.Error(logger).Log("msg", "Failed to build notification", "err", err)
+		const reason = "Failed to build notification"
+		level.Error(logger).Log("msg", reason, "err", err)
 		http.Error(w, "Bad Request", http.StatusBadRequest)
+		metrics.GetOrCreateCounter(
+			fmt.Sprintf(`http_requests_error{path="%s",reason="%s"}`, r.RequestURI, reason)).Inc()
 		return
 	}
 
 	robotResp, err := notifier.SendNotification(notification, httpClient, &target)
 	if err != nil {
-		level.Error(logger).Log("msg", "Failed to send notification", "err", err)
+		const reason = "Failed to send notification"
+		level.Error(logger).Log("msg", reason, "err", err)
 		http.Error(w, "Bad Request", http.StatusBadRequest)
+		metrics.GetOrCreateCounter(
+			fmt.Sprintf(`http_requests_error{path="%s",reason="%s"}`, r.RequestURI, reason)).Inc()
 		return
 	}
 
 	if robotResp.ErrorCode != 0 {
-		level.Error(logger).Log("msg", "Failed to send notification to DingTalk", "respCode", robotResp.ErrorCode, "respMsg", robotResp.ErrorMessage)
+		const reason = "Failed to send notification to DingTalk"
+		level.Error(logger).Log("msg", reason, "respCode", robotResp.ErrorCode, "respMsg", robotResp.ErrorMessage)
 		http.Error(w, "Unable to talk to DingTalk", http.StatusBadRequest)
+		metrics.GetOrCreateCounter(
+			fmt.Sprintf(`http_requests_error{path="%s",reason="%s",respCode="%d",respMsg="%s"}`,
+				r.RequestURI, reason, robotResp.ErrorCode, robotResp.ErrorMessage)).Inc()
 		return
 	}
 

@@ -61,3 +61,23 @@ test: common-test
 .PHONY: clean
 clean:
 	- @rm -rf "$(REACT_APP_OUTPUT_DIR)"s
+
+go-build-linux-arm64:
+	GOOS=linux  GOARCH=arm64 \
+	go build -o build/dingtalk-webhook-linux-arm64 cmd/prometheus-webhook-dingtalk/main.go
+
+go-build-linux-amd64:
+	GOOS=linux  GOARCH=amd64 \
+	go build -o build/dingtalk-webhook-linux-amd64 cmd/prometheus-webhook-dingtalk/main.go
+
+docker-build-linux-arm64:
+	docker build -t dingtalk-webhook:v2.1.1 --platform=linux/arm64 -f Dockerfile_linux_arm64 .
+
+docker-build-linux-amd64:
+	docker build -t dingtalk-webhook:v2.1.1 --platform=linux/amd64 -f Dockerfile_linux_amd64 .
+
+docker-tag:
+	docker tag dingtalk-webhook:v2.1.1 docker.io/ahfuzhang/dingtalk-webhook:v2.1.1
+
+docker-push:
+	docker push docker.io/ahfuzhang/dingtalk-webhook:v2.1.1

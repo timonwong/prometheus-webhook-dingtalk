@@ -16,6 +16,7 @@ import (
 	"github.com/prometheus/common/version"
 	"gopkg.in/alecthomas/kingpin.v2"
 
+	"github.com/VictoriaMetrics/metrics"
 	"github.com/timonwong/prometheus-webhook-dingtalk/config"
 	"github.com/timonwong/prometheus-webhook-dingtalk/template"
 	"github.com/timonwong/prometheus-webhook-dingtalk/web"
@@ -43,6 +44,24 @@ func run() int {
 			"config.file",
 			"Path to the configuration file.",
 		).Default("config.yml").ExistingFile()
+		// for push metrics
+		extraLabel = kingpin.Flag(
+			"pushmetrics.extraLabel",
+			"extraLabel for push metrics.",
+		).Default("").String()
+		intervalForPushMetrics = kingpin.Flag(
+			"pushmetrics.interval",
+			"interval for push metrics.",
+		).Default("15s").Duration()
+		urlForPushMetrics = kingpin.Flag(
+			"pushmetrics.url",
+			"urls for push metrics.",
+		).Default("").String()
+		// aviod too many alert
+		maxAlertCount = kingpin.Flag(
+			"maxalertcount",
+			"max alert count to send to ding talk.",
+		).Default("30").Uint16()
 	)
 
 	// DO NOT REMOVE. For compatibility purpose
@@ -58,6 +77,11 @@ func run() int {
 	logger := promlog.New(promlogConfig)
 	level.Info(logger).Log("msg", "Starting prometheus-webhook-dingtalk", "version", version.Info())
 	level.Info(logger).Log("msg", "Build context", version.BuildContext())
+
+	if len(*urlForPushMetrics) > 0 {
+		metrics.InitPush(*urlForPushMetrics,
+			*intervalForPushMetrics, *extraLabel, true)
+	}
 
 	flagsMap := map[string]string{}
 	// Exclude kingpin default flags to expose only Prometheus ones.
@@ -87,7 +111,8 @@ func run() int {
 			BuildDate: version.BuildDate,
 			GoVersion: version.GoVersion,
 		},
-		Flags: flagsMap,
+		Flags:         flagsMap,
+		MaxAlertCount: *maxAlertCount,
 	})
 
 	configLogger := log.With(logger, "component", "configuration")
